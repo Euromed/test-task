@@ -39,7 +39,7 @@ public class ImageCardAdapter extends RecyclerView.Adapter<ImageCardAdapter.View
     public ImageCardAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                           int viewType) {
         CardView v = (CardView) LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.point_card, parent, false);
+                .inflate(R.layout.image_card, parent, false);
         ViewHolder vh = new ViewHolder(v);
         return vh;
     }

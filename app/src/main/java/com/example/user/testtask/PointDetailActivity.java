@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -78,10 +79,12 @@ public class PointDetailActivity extends AppCompatActivity
                 TextView latitude = (TextView)activity.findViewById(R.id.latitude_edit);
                 latitude.setText(asr.point.getLatitude());
                 TextView longitude = (TextView)activity.findViewById(R.id.longitude_edit);
-                longitude.setText(asr.point.getLatitude());
+                longitude.setText(asr.point.getLongitude());
                 TextView lastVisited = (TextView)activity.findViewById(R.id.last_visited);
                 lastVisited.setText(asr.point.getLastVisited());
                 RecyclerView rv = (RecyclerView)activity.findViewById(R.id.images_view);
+                LinearLayoutManager layoutManager = new LinearLayoutManager(activity);
+                rv.setLayoutManager(layoutManager);
                 rv.setAdapter(asr.adapter);
             }
         };

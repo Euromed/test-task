@@ -59,7 +59,7 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
                 if (listener != null) {
                     String name = points.getCaption(position);
                     int pointId = points.getPointId(position);
-                    listener.onClick(position, name);
+                    listener.onClick(pointId, name);
                 }
             }
         });

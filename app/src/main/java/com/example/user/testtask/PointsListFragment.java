@@ -165,6 +165,6 @@ public class PointsListFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
-        void onClick(int point, String name);
+        void onClick(int pointId, String name);
     }
 }
