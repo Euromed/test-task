@@ -133,7 +133,7 @@ public class PointsListFragment extends Fragment {
                     db = dbh.getWritableDatabase();
                 }
                 Points points = new Points(db);
-                PointCardAdapter adapter = new PointCardAdapter(points);
+                PointCardAdapter adapter = new PointCardAdapter(points, mListener);
                 adapter.getItemCount();
                 return adapter;
             }
@@ -165,5 +165,6 @@ public class PointsListFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+        void onClick(int point, String name);
     }
 }

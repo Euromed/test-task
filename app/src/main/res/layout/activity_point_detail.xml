@@ -20,34 +20,45 @@
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
             app:contentScrim="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed" >
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="match_parent"
+                android:paddingBottom="@dimen/title_span">
+
                 <ImageView
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
+                    android:layout_height="match_parent"
                     android:id="@+id/header_image"
                     android:scaleType="centerCrop" />
 
-                <EditText
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/latitude_edit"
                     android:hint="@string/hint_latitude"
                     android:gravity="bottom|end"
                     android:layout_alignParentEnd="true"
-                    android:layout_above="@+id/longitude_edit" />
+                    android:layout_alignParentRight="true"
+                    android:layout_above="@+id/longitude_edit"
+                    android:paddingEnd="@dimen/text_margin"
+                    android:paddingRight="@dimen/text_margin" />
 
-                <EditText
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/longitude_edit"
                     android:hint="@string/hint_longitude"
                     android:layout_alignEnd="@id/header_image"
+                    android:layout_alignRight="@id/header_image"
                     android:layout_alignParentEnd="false"
-                    android:layout_alignParentBottom="true" />
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentBottom="true"
+                    android:paddingBottom="@dimen/text_margin"
+                    android:paddingEnd="@dimen/text_margin"
+                    android:paddingRight="@dimen/text_margin" />
+
             </RelativeLayout>
 
             <android.support.v7.widget.Toolbar
@@ -56,7 +67,8 @@
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
                 app:popupTheme="@style/AppTheme.PopupOverlay" />
-
+<!--                 android:layout_height="?attr/actionBarSize"
+-->
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>
 

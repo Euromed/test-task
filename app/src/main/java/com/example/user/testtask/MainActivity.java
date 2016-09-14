@@ -164,4 +164,11 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    public void onClick(int point, String name) {
+        Intent intent = new Intent(this, PointDetailActivity.class);
+        intent.putExtra(PointDetailActivity.EXTRA_POINT, point);
+        intent.putExtra(PointDetailActivity.EXTRA_NAME, name);
+        startActivity(intent);
+    }
 }

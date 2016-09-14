@@ -27,6 +27,11 @@ public class Points {
         return getPointsCursor().getString(1);
     }
 
+    public int getPointId (int pos) {
+        getPointsCursor().moveToPosition(pos);
+        return getPointsCursor().getInt(0);
+    }
+
     public int getCount() {
         return getPointsCursor().getCount();
     }

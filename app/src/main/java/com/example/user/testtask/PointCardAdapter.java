@@ -22,9 +22,11 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
 
     private Points points;
     private final int[] imgIds = {R.id.mainImage, R.id.image1, R.id.image2, R.id.image3, R.id.image4, R.id.image5};
+    private final PointsListFragment.OnFragmentInteractionListener listener;
 
-    public PointCardAdapter(Points pointsSource) {
+    public PointCardAdapter(Points pointsSource, PointsListFragment.OnFragmentInteractionListener listener) {
         points = pointsSource;
+        this.listener = listener;
     }
 
     @Override
@@ -37,7 +39,7 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, final int position) {
         CardView v = holder.cardView;
         TextView caption = (TextView)v.findViewById(R.id.caption);
         caption.setText(points.getCaption(position));
@@ -51,6 +53,16 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
                 img.setImageBitmap(null);
             }
         }
+        v.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (listener != null) {
+                    String name = points.getCaption(position);
+                    int pointId = points.getPointId(position);
+                    listener.onClick(position, name);
+                }
+            }
+        });
     }
 
     @Override
