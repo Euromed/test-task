@@ -20,23 +20,23 @@ public class Point {
     }
 
     public String getCaption () {
-        return getPointCursor().getString(1);
+        return getPointCursor().getString(0);
     }
 
     public String getLatitude () {
-        return Double.toString(getPointCursor().getDouble(2));
+        return Double.toString(getPointCursor().getDouble(1));
     }
 
     public String getLongitude () {
-        return Double.toString(getPointCursor().getDouble(3));
+        return Double.toString(getPointCursor().getDouble(2));
     }
 
     public String getLastVisited () {
-        return Double.toString(getPointCursor().getDouble(4));
+        return getPointCursor().getString(3);
     }
 
     public int getDefaultImage () {
-        return getPointCursor().getInt(5);
+        return getPointCursor().getInt(4);
     }
 
     public int getCount() {
@@ -46,8 +46,8 @@ public class Point {
     public void LoadImage(ImageView v, int img) {
         Cursor pointsCursor = getPointCursor();
         int defaultImage = 0;
-        if (!pointsCursor.isNull(5)) {
-            defaultImage = pointsCursor.getInt(5);
+        if (!pointsCursor.isNull(4)) {
+            defaultImage = pointsCursor.getInt(4);
         }
         Cursor imageCursor = getImageCursor();
         imageCursor.moveToFirst();
