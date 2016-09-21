@@ -6,14 +6,24 @@ import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import us.fatehi.pointlocation6709.Angle;
+import us.fatehi.pointlocation6709.Latitude;
+import us.fatehi.pointlocation6709.Longitude;
+import us.fatehi.pointlocation6709.format.PointLocationFormatType;
+import us.fatehi.pointlocation6709.format.PointLocationFormatter;
 
 public class PointDetailActivity extends AppCompatActivity
     implements ImageCardAdapter.OnCardInteractionListener
@@ -76,12 +86,33 @@ public class PointDetailActivity extends AppCompatActivity
             @Override
             protected void onPostExecute(AsyncResult asr) {
                 super.onPostExecute(asr);
-                TextView latitude = (TextView)activity.findViewById(R.id.latitude_edit);
-                latitude.setText(asr.point.getLatitude());
-                TextView longitude = (TextView)activity.findViewById(R.id.longitude_edit);
-                longitude.setText(asr.point.getLongitude());
+                double latitude = asr.point.getLatitude();
+                double longitude = asr.point.getLongitude();
+
+                ImageView headerMap = (ImageView)activity.findViewById(R.id.header_image);
+                MapHelper.LoadStatic(headerMap, latitude, longitude);
+
+                TextView latitudeView = (TextView)activity.findViewById(R.id.latitude_edit);
+                String str = "";
+                try {
+                    Latitude val = new Latitude(Angle.fromDegrees(latitude));
+                    str = PointLocationFormatter.formatLatitude(val, PointLocationFormatType.HUMAN_LONG);
+                }
+                catch (Exception e) {}
+                latitudeView.setText(str);
+
+                TextView longitudeView = (TextView)activity.findViewById(R.id.longitude_edit);
+                str = "";
+                try {
+                    Longitude val = new Longitude(Angle.fromDegrees(longitude));
+                    str = PointLocationFormatter.formatLongitude(val, PointLocationFormatType.HUMAN_LONG);
+                }
+                catch (Exception e) {}
+                longitudeView.setText(str);
+
                 TextView lastVisited = (TextView)activity.findViewById(R.id.last_visited);
                 lastVisited.setText(asr.point.getLastVisited());
+
                 RecyclerView rv = (RecyclerView)activity.findViewById(R.id.images_view);
                 LinearLayoutManager layoutManager = new LinearLayoutManager(activity);
                 rv.setLayoutManager(layoutManager);
@@ -89,6 +120,29 @@ public class PointDetailActivity extends AppCompatActivity
             }
         };
         task.execute();
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_point_detail, menu);
+        return (true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+
+        switch (itemId) {
+            case R.id.action_edit:
+                Intent intent = new Intent(this, PointEditActivity.class);
+                intent.putExtra(PointEditActivity.EXTRA_POINT, pointId);
+                intent.putExtra(PointEditActivity.EXTRA_NAME, getTitle());
+                startActivity(intent);
+                return (true);
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

@@ -105,7 +105,7 @@ class BitmapWorkerTask extends AsyncTask<Object, Void, Bitmap> {
         InputStream is = null;
         Log.i("BWT", "Load bitmap - " + (urlData == null ? data : urlData) + "\n");
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 4;
+        options.inSampleSize = 1;
         options.outWidth = width;
         options.outHeight = height;
         if (urlData == null) {

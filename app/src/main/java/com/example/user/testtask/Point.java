@@ -2,7 +2,14 @@ package com.example.user.testtask;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 import android.widget.ImageView;
+
+import us.fatehi.pointlocation6709.Angle;
+import us.fatehi.pointlocation6709.Latitude;
+import us.fatehi.pointlocation6709.Longitude;
+import us.fatehi.pointlocation6709.format.PointLocationFormatType;
+import us.fatehi.pointlocation6709.format.PointLocationFormatter;
 
 /**
  * Created by const on 13.09.2016.
@@ -23,12 +30,12 @@ public class Point {
         return getPointCursor().getString(0);
     }
 
-    public String getLatitude () {
-        return Double.toString(getPointCursor().getDouble(1));
+    public double getLatitude () {
+        return getPointCursor().getDouble(1);
     }
 
-    public String getLongitude () {
-        return Double.toString(getPointCursor().getDouble(2));
+    public double getLongitude () {
+        return getPointCursor().getDouble(2);
     }
 
     public String getLastVisited () {
