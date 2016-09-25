@@ -1,0 +1,138 @@
+import java.util.*;
+import java.io.*;
+import java.math.*;
+
+/**
+ * Auto-generated code below aims at helping you parse
+ * the standard input according to the problem statement.
+ **/
+class Player {
+
+    static final int BOMB_RANGE = 2;
+
+    static final int CELL_EMPTY = 0;
+    static final int CELL_BOX   = 1;
+    static final int CELL_BOMB  = 2;
+    static int grid[][];
+    static int my_x, my_y, width, height;
+
+    public static void main(String args[]) {
+        Scanner in = new Scanner(System.in);
+        width = in.nextInt();
+        height = in.nextInt();
+        int my_id = in.nextInt();
+        in.nextLine();
+
+        grid = new int[width][];
+        for (int i = 0; i < width; ++i) {
+            grid[i] = new int[height];
+        }
+
+        // game loop
+        while (true) {
+            for (int i = 0; i < height; i++) {
+                String row = in.nextLine();
+                for (int j = 0; j < width; ++j) {
+                    switch (row.charAt(j)) {
+                        case '.':
+                            grid[j][i] = CELL_EMPTY;
+                            break;
+                        case '0':
+                            grid[j][i] = CELL_BOX;
+                            break;
+                    }
+                }
+            }
+
+            int entities = in.nextInt();
+            for (int i = 0; i < entities; i++) {
+                int entityType = in.nextInt();
+                int owner = in.nextInt();
+                int x = in.nextInt();
+                int y = in.nextInt();
+                int param1 = in.nextInt();
+                int param2 = in.nextInt();
+
+                switch (entityType) {
+                    case 0: // player
+                        if (owner == my_id) {
+                            my_x = x;
+                            my_y = y;
+                        }
+                        break;
+                    case 1: // bomb
+                        explode_bomb(x,y);
+                        grid[x][y] = CELL_BOMB;
+                        break;
+                }
+            }
+            in.nextLine();
+
+            String action = do_move();
+            // Write an action using System.out.println()
+            // To debug: System.err.println("Debug messages...");
+
+            System.out.println(action);
+        }
+    }
+
+    static void explode_bomb(final int x, final int y) {
+        int st, fin;
+
+        st = x - BOMB_RANGE;
+        if (st < 0) {
+            st = 0;
+        }
+        fin = x + BOMB_RANGE;
+        if (fin >= width) {
+            fin = width - 1;
+        }
+        for (int i = st; i <= fin; ++i) {
+            grid[i][y] = CELL_EMPTY;
+        }
+
+        st = y - BOMB_RANGE;
+        if (st < 0) {
+            st = 0;
+        }
+        fin = y + BOMB_RANGE;
+        if (fin >= height) {
+            fin = height - 1;
+        }
+        for (int i = st; i <= fin; ++i) {
+            grid[x][i] = CELL_EMPTY;
+        }
+    }
+
+    static String do_move() {
+        print_field(grid);
+        return("BOMB 6 5");
+    }
+
+    static void print_field(int field[][]) {
+        for (int i = 0; i < field[0].length; ++i) {
+            for (int j = 0; j < field.length; ++j) {
+                int cell = field[j][i];
+                System.err.print(cell);
+                char ch = '.';
+                if (cell > 0) {
+                    cell = '^';
+                    if (cell <= 9) {
+                        ch = (char)('0' + cell);
+                    }
+                    else if (cell <= 10 + 'z' - 'a') {
+                        ch = (char)('a' + cell - 10);
+                    }
+                }
+                if (cell < 0) {
+                    ch = '~';
+                    if (cell >= 'A' - 'Z' - 1) {
+                        ch = (char)('A' - cell - 1);
+                    }
+                }
+                //System.err.print(ch);
+            }
+            System.err.println();
+        }
+    }
+}
