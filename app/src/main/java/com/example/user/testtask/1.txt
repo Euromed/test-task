@@ -14,7 +14,10 @@ class Player {
     static final int CELL_BOX   = 1;
     static final int CELL_BOMB  = 2;
     static int grid[][];
+    static int grid_weights[][];
+    static int distances[][];
     static int my_x, my_y, width, height;
+    static int available_bombs, bombs_unavailability_time;
 
     public static void main(String args[]) {
         Scanner in = new Scanner(System.in);
@@ -23,10 +26,8 @@ class Player {
         int my_id = in.nextInt();
         in.nextLine();
 
-        grid = new int[width][];
-        for (int i = 0; i < width; ++i) {
-            grid[i] = new int[height];
-        }
+        grid = create_field(width, height);
+        grid_weights = create_field(width, height);
 
         // game loop
         while (true) {
@@ -45,6 +46,7 @@ class Player {
             }
 
             int entities = in.nextInt();
+            bombs_unavailability_time = 10;
             for (int i = 0; i < entities; i++) {
                 int entityType = in.nextInt();
                 int owner = in.nextInt();
@@ -58,11 +60,16 @@ class Player {
                         if (owner == my_id) {
                             my_x = x;
                             my_y = y;
+                            available_bombs = param1;
                         }
                         break;
                     case 1: // bomb
                         explode_bomb(x,y);
                         grid[x][y] = CELL_BOMB;
+                        if (owner == my_id && param1 < bombs_unavailability_time) {
+                            bombs_unavailability_time = param1;
+                            System.err.println("Bomb counter..." + bombs_unavailability_time);
+                        }
                         break;
                 }
             }
@@ -88,7 +95,9 @@ class Player {
             fin = width - 1;
         }
         for (int i = st; i <= fin; ++i) {
-            grid[i][y] = CELL_EMPTY;
+            if (grid[i][y] == CELL_BOX) {
+                grid[i][y] = CELL_BOMB;
+            }
         }
 
         st = y - BOMB_RANGE;
@@ -100,23 +109,39 @@ class Player {
             fin = height - 1;
         }
         for (int i = st; i <= fin; ++i) {
-            grid[x][i] = CELL_EMPTY;
+            if (grid[i][y] == CELL_BOX) {
+                grid[i][y] = CELL_BOMB;
+            }
         }
     }
 
     static String do_move() {
-        print_field(grid);
-        return("BOMB 6 5");
+        calc_weights();
+        calc_distances();
+        Point next_place = find_next_bomb_place();
+        if (next_place != null) {
+            if (my_x == next_place.x && my_y == next_place.y && available_bombs > 0) {
+                explode_bomb(my_x, my_y);
+                calc_weights();
+                next_place = find_next_bomb_place();
+                if (next_place == null) {
+                    return ("BOMB 0 0");
+                }
+                return ("BOMB " + next_place.x + " " + next_place.y);
+            }
+            return ("MOVE " + next_place.x + " " + next_place.y);
+        }
+        return("MOVE 0 0");
     }
 
     static void print_field(int field[][]) {
         for (int i = 0; i < field[0].length; ++i) {
             for (int j = 0; j < field.length; ++j) {
                 int cell = field[j][i];
-                System.err.print(cell);
+                //System.err.print(cell);
                 char ch = '.';
                 if (cell > 0) {
-                    cell = '^';
+                    ch = '^';
                     if (cell <= 9) {
                         ch = (char)('0' + cell);
                     }
@@ -130,9 +155,115 @@ class Player {
                         ch = (char)('A' - cell - 1);
                     }
                 }
-                //System.err.print(ch);
+                System.err.print(ch);
             }
             System.err.println();
         }
+    }
+
+    static int[][]  create_field(int size1, int size2) {
+        int rv[][] = new int[size1][];
+        for (int i = 0; i < size1; ++i) {
+            rv[i] = new int[size2];
+        }
+        return (rv);
+    }
+
+    static class Point {
+        public int x;
+        public int y;
+        public Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    static void calc_distances() {
+        distances = create_field(width, height);
+        distances[my_x][my_y] = 1;
+        ArrayList<Point> nodes = new ArrayList<Point>();
+        nodes.add(new Point(my_x, my_y));
+        int dist = 0;
+        while (nodes.size() > 0) {
+            nodes = make_step(nodes, ++dist);
+        }
+    }
+
+    static ArrayList<Point> make_step(ArrayList<Point> nodes, int dist) {
+        ArrayList<Point> rv = new ArrayList<Point>();
+        for (int i = 0; i < nodes.size(); ++i) {
+            int x = nodes.get(i).x;
+            int y = nodes.get(i).y;
+            if (x > 0 && grid[x-1][y] == CELL_EMPTY && distances[x-1][y] == 0) {
+                rv.add(new Point(x-1, y));
+                distances[x-1][y] = dist;
+            }
+            if (x < width-1 && grid[x+1][y] == CELL_EMPTY && distances[x+1][y] == 0) {
+                rv.add(new Point(x+1, y));
+                distances[x+1][y] = dist;
+            }
+            if (y > 0 && grid[x][y-1] == CELL_EMPTY && distances[x][y-1] == 0) {
+                rv.add(new Point(x, y-1));
+                distances[x][y-1] = dist;
+            }
+            if (y < height-1 && grid[x][y+1] == CELL_EMPTY && distances[x][y+1] == 0) {
+                rv.add(new Point(x, y+1));
+                distances[x][y+1] = dist;
+            }
+        }
+        return (rv);
+    }
+
+    static void calc_weights() {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                if (grid[x][y] == CELL_BOX) {
+                    continue;
+                }
+                int weight = 0;
+                for (int i = x - BOMB_RANGE; i <= x + BOMB_RANGE; ++i) {
+                    if (i >= 0 && i < width && grid[i][y] == CELL_BOX) {
+                        ++weight;
+                    }
+                }
+                for (int i = y - BOMB_RANGE; i <= y + BOMB_RANGE; ++i) {
+                    if (i >= 0 && i < height && grid[x][i] == CELL_BOX) {
+                        ++weight;
+                    }
+                }
+                grid_weights[x][y] = weight;
+            }
+        }
+    }
+
+    static Point find_next_bomb_place() {
+        Point rv = null;
+        int weight = 0;
+        double speed = 0;
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                int point_weight = grid_weights[x][y];
+                int point_distance = distances[x][y];
+                if (point_weight <= 0 || point_distance == 0) {
+                    continue;
+                }
+                if (available_bombs <= 0 || point_distance < bombs_unavailability_time) {
+                    point_distance = bombs_unavailability_time;
+                }
+                double point_speed = (double)point_weight / point_distance;
+                if (point_speed > speed || (point_speed == speed && point_weight > weight)) {
+                    weight = point_weight;
+                    speed = point_speed;
+                    if (rv == null) {
+                        rv = new Point(x, y);
+                    }
+                    else {
+                        rv.x = x;
+                        rv.y = y;
+                    }
+                }
+            }
+        }
+        return (rv);
     }
 }
