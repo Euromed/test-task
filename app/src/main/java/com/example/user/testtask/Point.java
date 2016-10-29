@@ -43,7 +43,12 @@ public class Point {
     }
 
     public int getDefaultImage () {
-        return getPointCursor().getInt(4);
+        Cursor pointCursor = getPointCursor();
+        int defaultImage = 0;
+        if (!pointCursor.isNull(4)) {
+            defaultImage = pointCursor.getInt(4);
+        }
+        return defaultImage;
     }
 
     public int getCount() {
@@ -51,11 +56,7 @@ public class Point {
     }
 
     public void LoadImage(ImageView v, int img) {
-        Cursor pointsCursor = getPointCursor();
-        int defaultImage = 0;
-        if (!pointsCursor.isNull(4)) {
-            defaultImage = pointsCursor.getInt(4);
-        }
+        int defaultImage = getDefaultImage();
         Cursor imageCursor = getImageCursor();
         imageCursor.moveToFirst();
         if (defaultImage != 0) {
@@ -78,6 +79,8 @@ public class Point {
         }
         BitmapWorkerTask.loadBitmap(imageCursor.getString(1), v);
     }
+
+
 
     Cursor getPointCursor() {
         if (pointCursor == null) {

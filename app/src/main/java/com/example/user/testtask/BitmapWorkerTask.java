@@ -53,6 +53,11 @@ class BitmapWorkerTask extends AsyncTask<Object, Void, Bitmap> {
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(imageView.getResources(), null, task);
             imageView.setImageDrawable(asyncDrawable);
+
+            int w = imageView.getWidth();
+            int h = imageView.getHeight();
+            Log.i("BWT", "Load bitmap - view size (" + w + ", " + h + ")\n");
+
             task.execute(resId, url, imageView.getWidth(), imageView.getHeight());
         }
     }

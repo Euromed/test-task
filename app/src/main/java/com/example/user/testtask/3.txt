@@ -9,10 +9,7 @@ import java.math.*;
 class Player {
 
     static State state = null;
-    static int grid_weights[][];
-    static int distances[][];
-    static int my_x, my_y, width, height;
-    static int available_bombs, bombs_unavailability_time;
+    static int width, height;
 
     static long enterTime = 0;
 
@@ -64,10 +61,11 @@ class Player {
     }
 
     static String do_move() {
-        /*Strategy_tester tester = new Strategy_tester(grid);
-        Strategy s = tester.find();
-        String rv = (s.explode ? "BOMB " : "MOVE ") + (grid.my_x+s.dx) + " " + (grid.my_y+s.dy);*/
-        return ("BOMB 5 6");
+
+        Tester tester = new Tester();
+        Strategy s = tester.find_strategy(state);
+        String rv = (s.explode ? "BOMB " : "MOVE ") + (state.my_x+s.dx) + " " + (state.my_y+s.dy);
+        return (rv);
     }
 
 }
@@ -376,11 +374,10 @@ class Life implements Cloneable {
 
 class Rules implements Cloneable {
 
-    public static final int INITIAL_BOMB_LIFE = 8;
+    public static final int INITIAL_BOMB_LIFE = 9;
 
     public State state = null;;
     public Life life = null;
-    public int[] score = null;
 
     public Rules (State state) {
         this.state = state;
@@ -391,16 +388,18 @@ class Rules implements Cloneable {
     private void init_life() {
         int n = state.item_count();
         int[] map = new int[n];
-        int map_size = 0;
+        int map_size = -1;
         Item it = null;
         for (int i = 0; i < n; ++i) {
             it = state.get_item(i, it);
             if (it.type == Item.TYPE_BOMB) {
                 int key = it.param1 << 20 | it.owner << 16 | i;
-                map[map_size] = key;
+                map[++map_size] = key;
             }
         }
-        Arrays.sort(map, 0, map_size-1);
+        if (map_size > 1) {
+            Arrays.sort(map, 0, map_size-1);
+        }
         for (int i = 0; i < map_size; ++i) {
             it = state.get_item(map[i] & 0xffff, it);
             explode_bomb(it, -1);
@@ -470,6 +469,7 @@ class Rules implements Cloneable {
             case State.CELL_BOMB:
                 int n = state.find_item_first(x, y, it);
                 while (n != -1) {
+                    it = state.get_item(n, it);
                     if (it.type == Item.TYPE_BOMB && it.owner != data.owner) {
                         data.score += explode_bomb(it, data.time);
                     }
@@ -499,9 +499,384 @@ class Rules implements Cloneable {
         }
         return (rv);
     }
+
+    public boolean move_hero(Score score, int dx, int dy) {
+        int x = score.x + dx;
+        int y = score.y + dy;
+        int cell = State.CELL_EMPTY;
+        if (x >= 0 && x < state.width && y >= 0 && y < state.height &&
+            (life.le(x, y, score.step) || (cell = state.get_cell(x, y)) != State.CELL_BOX &&
+             cell != State.CELL_WALL && cell != State.CELL_BOMB)) {
+            score.x = x;
+            score.y = y;
+            ++score.step;
+            if (score.bombs_unavailability_time == 0) {
+                if (--score.bombs_unavailability_time == 0) { // modify for bomb chain
+                    ++score.available_bombs;
+                }
+            }
+            if (cell == State.CELL_EXTRA_BOMB) {
+                ++score.available_bombs;
+                ++score.max_bomb_count;
+                life.add(x, y, score.step);
+            }
+            if (cell == State.CELL_EXTRA_RANGE) {
+                ++score.bomb_range;
+                life.add(x, y, score.step);
+            }
+            return (true);
+        }
+        return (false);
+    }
+
+    public boolean place_bomb(Score score) {
+        if (score.available_bombs == 0) {
+            score.step += score.bombs_unavailability_time;
+            score.bombs_unavailability_time = INITIAL_BOMB_LIFE;
+        }
+        else if (score.available_bombs-- == score.max_bomb_count) { // modify for bomb chain
+            score.bombs_unavailability_time = INITIAL_BOMB_LIFE;
+        }
+        int bomb_life = score.step + INITIAL_BOMB_LIFE;
+        Item bomb = new Item(score.x, score.y, Item.TYPE_BOMB, state.my_id, bomb_life, score.bomb_range);
+        int bomb_score = explode_bomb(bomb, bomb_life);
+//        if (bomb_score > 0) {
+            score.score += bomb_score;
+            score.time = Math.max(score.time, bomb_life);
+//        }
+        ++score.placed_bomb_count;
+        return (true);
+    }
+
+    @Override
+    public Object clone() {
+        Rules copy = null;
+        try {
+            copy = (Rules)super.clone();
+            copy.state = (State)state.clone();
+            copy.life = (Life)life.clone();
+        }
+        catch (Exception e) {
+            System.err.println("Can't clone some objects");
+            System.exit(1);
+        }
+        return (copy);
+    }
 }
 
-class Point {
+class Score implements Cloneable {
+    int strategy;
+    int x, y;
+    int step;
+    int score;
+    int time;
+    int available_bombs;
+    int bombs_unavailability_time;
+    int bomb_range;
+    int max_bomb_count;
+    int placed_bomb_count;
+    Rules rules;
+
+    boolean gt(Score score) {
+        if (score == null) {
+            return (true);
+        }
+/*        int compare = this.score * score.time - score.score * time;
+        return (compare > 0 ||
+                compare == 0 &&
+                    (/*time < score.time ||* / step < score.step ||
+                     max_bomb_count > score.max_bomb_count ||
+                     bomb_range > score.bomb_range
+                    )
+               );*/
+        return (this.score > score.score ||
+                this.score == score.score && (step < score.step  ||
+                step == score.step &&
+                    (max_bomb_count > score.max_bomb_count || bomb_range > score.bomb_range)
+                ));
+    }
+
+    boolean gt_short(Score score) {
+//        int compare = this.score * score.time - score.score * time;
+//        return (compare > 0 || compare == 0 && (/*time < score.time ||*/ step < score.step));
+        return (this.score > score.score ||
+                this.score == score.score && step < score.step);
+    }
+
+    boolean eq_level(Score score) {
+        return (bomb_range == score.bomb_range &&
+                max_bomb_count == score.max_bomb_count &&
+                placed_bomb_count == score.placed_bomb_count);
+    }
+
+    @Override
+    public Object clone() {
+        Object copy = null;
+        try {
+            copy = super.clone();
+        }
+        catch (Exception e) {
+            System.err.println("Can't clone some objects");
+            System.exit(1);
+        }
+        return (copy);
+    }
+
+    public String toString() {
+        return ("{" + strategy + ", (" + x + "," + y + "), step=" + step + " score=" +
+            score + " time=" + time + " level=(" + placed_bomb_count + "," + max_bomb_count + "," + bomb_range + ")");
+    /*int available_bombs;
+    int bombs_unavailability_time;*/
+    }
+}
+
+class ScoreArray extends ArrayList<Score> {
+}
+
+class ScoreField {
+    public final int width;
+    public final int height;
+    private ScoreArray[] field;
+    private ScoreArray[] step;
+
+    public ScoreField (State state) {
+        width = state.width;
+        height = state.height;
+        field = new ScoreArray[width*height];
+        step = new ScoreArray[width*height];
+    }
+
+    public ScoreArray get(int x, int y) {
+        return (field[x + y*width]);
+    }
+
+    public void put(Score score) {
+        int n = score.x + score.y*width;
+        ScoreArray cell = field[n];
+        if (score.bomb_range > Tester.MAX_BOMB_RANGE) {
+            score.bomb_range = Tester.MAX_BOMB_RANGE;
+        }
+        if (score.max_bomb_count > Tester.MAX_BOMB_COUNT) {
+            score.max_bomb_count = Tester.MAX_BOMB_COUNT;
+        }
+        if (cell == null) {
+            cell = new ScoreArray();
+            cell.add(score);
+            add_step(score);
+            field[n] = cell;
+            return;
+        }
+        int k = cell.size();
+        for (int i = 0; i < k; ++i) {
+            Score cs = cell.get(i);
+            if (score.eq_level(cs)) {
+                if (score.gt_short(cs)) {
+                    cell.set(i, score);
+/*if (score.step == 4 && cs.step == 3) {
+    System.err.println("sfPut old: " + cs.toString());
+    System.err.println("sfPut new: " + score.toString());
+}/**/
+                    remove_step(cs);
+                    add_step(score);
+                }
+                return;
+            }
+        }
+        cell.add(score);
+        add_step(score);
+    }
+
+    public int step_size() {
+        return (step.length);
+    }
+
+    public ScoreArray get_step(int n) {
+        if (n >= step.length) {
+            return (null);
+        }
+        return (step[n]);
+    }
+
+    public Score get_max_score() {
+
+        Score rv = null;
+        for (ScoreArray sa : field) {
+            if (sa == null) {
+                continue;
+            }
+            for (Score score : sa) {
+/*                if (score.placed_bomb_count < Tester.MAX_PLACED_BOMB) {
+                    continue;
+                }/**/
+                if (score.gt(rv)) {
+                    rv = score;
+                }
+            }
+        }
+System.err.println("The best: " + rv.toString());
+        return (rv);
+    }
+
+    public void log () {
+        for (int y = 0; y < height; ++y) {
+            String str = "";
+            for (int x = 0; x < width; ++x) {
+                ScoreArray cell = get(x, y);
+                if (cell == null) {
+                    str += "...... ";
+                    continue;
+                }
+                Score max = null;
+                for (Score score : cell) {
+                    if (score.gt(max)) {
+                        max = score;
+                    }
+                }
+                str += String.format("%3d.%2d ", max.score*1000/max.time, max.step);
+            }
+            System.err.println(str);
+        }
+    }
+
+    private void remove_step(Score score) {
+        ScoreArray sa = step[score.step];
+        if (sa == null) {
+            return;
+        }
+//System.err.println("Remove step:" + (score == null));
+//System.err.println("Remove step[]:" + (step[score.step] == null));
+//System.err.println("Remove step[]:" + );
+//System.err.println("Remove step:" + score.toString());
+        sa.remove(score);
+    }
+
+    private void add_step(Score score) {
+        if (score.placed_bomb_count >= Tester.MAX_PLACED_BOMB) {
+            return;
+        }
+        int n = step.length;
+        int k = score.step;
+        if (n <= k) {
+            ScoreArray[] new_step = new ScoreArray[k+1];
+            System.arraycopy(step, 0, new_step, 0, n);
+            step = new_step;
+        }
+        if (step[k] == null) {
+            step[k] = new ScoreArray();
+        }
+//System.err.println("Add score step " + score.step + " (" + score.x + ", " + score.y + "): bombs = " + score.placed_bomb_count);
+//System.err.println("Add step: " + score.toString());
+        step[k].add(score);
+    }
+}
+
+class Tester {
+    public static final int MAX_BOMB_RANGE = 8;
+    public static final int MAX_BOMB_COUNT = 4;
+    public static final int MAX_PLACED_BOMB = 2;
+
+    private Rules rules;
+    private ScoreField scores;
+
+    public Strategy find_strategy(State state) {
+        rules = new Rules(state);
+        scores = new ScoreField(state);
+        Score in = new Score();
+        in.x = state.my_x;
+        in.y = state.my_y;
+        in.step = 0;
+        in.score = 0;
+        in.time = 1;
+        in.available_bombs = state.available_bombs;
+        in.bombs_unavailability_time = state.bombs_unavailability_time;
+        in.bomb_range = state.bomb_range;
+        in.max_bomb_count = state.max_bomb_count;
+        in.placed_bomb_count = 0;
+        in.rules = rules;
+        Score in_explode = place_bomb(in);
+        for (int i = 0; i < Strategy.strategies_first.length; ++i) {
+            in.strategy = i;
+            in_explode.strategy = i;
+//System.err.println("First strategy -" + i);
+            test(Strategy.strategies_first[i], in, in_explode);
+        }
+        int n = Strategy.strategies_first.length;
+        for (int i = 1; i < scores.step_size(); ++i) {
+            ScoreArray steps = scores.get_step(i);
+            if (steps == null) {
+                continue;
+            }
+//System.err.println("Next step - " + i);
+            ScoreArray steps_copy = (ScoreArray)steps.clone();
+            for (Score ins : steps_copy) {
+//System.err.println("Strategies for - " + ins.toString());
+                in_explode = place_bomb(ins);
+                for (int j = 0; j < n; ++j) {
+//System.err.println("Next strategy -" + i + ", x = " + ins.y + ", x = " + ins.y);
+                    test(Strategy.strategies_first[j], ins, in_explode);
+                }
+            }
+        }
+scores.log();
+        return (Strategy.strategies_first[scores.get_max_score().strategy]);
+    }
+
+    private Score place_bomb(Score in) {
+        Score rv = (Score)in.clone();
+        rv.rules = (Rules)in.rules.clone();
+        if (!rv.rules.place_bomb(rv)) {
+            return (null);
+        }
+        return (rv);
+    }
+
+    private void test(Strategy strategy, Score in, Score in_explode) {
+        Score score = strategy.explode ? (Score)in_explode.clone() : (Score)in.clone();
+        if (score == null) {
+//System.err.println("Test strategy - null");
+            return;
+        }
+        if (score.rules.move_hero(score, strategy.dx, strategy.dy)) {
+//System.err.println("Put strategy - " + score.toString());
+            scores.put(score);
+        }
+    }
+}
+
+class Strategy {
+    public final boolean explode;
+    public final int dx, dy;
+    public final boolean escape;
+    public Strategy(boolean explode, int dx, int dy, boolean escape) {
+        this.explode = explode;
+        this.dx = dx;
+        this.dy = dy;
+        this.escape = escape;
+    }
+
+    public static final Strategy strategies_first[] = {
+        new Strategy(true,  -1,  0, true),
+        new Strategy(true,   1,  0, true),
+        new Strategy(true,   0, -1, true),
+        new Strategy(true,   0,  1, true),
+//        new Strategy(true,   0,  0, true),
+//        new Strategy(false,  0,  0, false),
+        new Strategy(false, -1,  0, false),
+        new Strategy(false,  1,  0, false),
+        new Strategy(false,  0, -1, false),
+        new Strategy(false,  0,  1, false)
+    };
+
+    public static final Strategy strategies_next[] = {
+        new Strategy(true,   0,  0, true),
+        new Strategy(false, -1,  0, false),
+        new Strategy(false,  1,  0, false),
+        new Strategy(false,  0, -1, false),
+        new Strategy(false,  0,  1, false)
+    };
+}
+
+/*class Point {
     public int x;
     public int y;
     public Point(int x, int y) {
@@ -509,16 +884,7 @@ class Point {
         this.y = y;
     }
 }
-
-class Strategy {
-    public boolean explode;
-    public int dx, dy;
-    public Strategy(boolean explode, int dx, int dy) {
-        this.explode = explode;
-        this.dx = dx;
-        this.dy = dy;
-    }
-}
+*/
 
 /*
 class Distances extends Field {

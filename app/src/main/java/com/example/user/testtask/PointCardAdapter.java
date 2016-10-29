@@ -31,7 +31,7 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
 
     @Override
     public PointCardAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                   int viewType) {
+                                                              int viewType) {
         CardView v = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.point_card, parent, false);
         ViewHolder vh = new ViewHolder(v);
