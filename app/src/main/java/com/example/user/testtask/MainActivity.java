@@ -80,22 +80,21 @@ public class MainActivity extends AppCompatActivity
 
         if (savedInstanceState == null) {
             currentFragment = PointsListFragmentIdx;
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            switch (currentFragment) {
+                case PointsListFragmentIdx:
+                    PointsListFragment fragment = new PointsListFragment();
+                    ft.add(R.id.fragment_container, fragment);
+                    break;
+                case MapFragmentIdx:
+                    //frameLayout.addView(new PointsListFragment());
+                    break;
+            }
+            ft.commit();
         }
         else {
             currentFragment = savedInstanceState.getInt(CurrentFragmentIdx);
         }
-
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        switch (currentFragment) {
-            case PointsListFragmentIdx:
-                PointsListFragment fragment = new PointsListFragment();
-                ft.add(R.id.fragment_container, fragment);
-                break;
-            case MapFragmentIdx:
-                //frameLayout.addView(new PointsListFragment());
-                break;
-        }
-        ft.commit();
     }
 
     @Override
@@ -157,6 +156,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
         outState.putInt(CurrentFragmentIdx, currentFragment);
     }
 

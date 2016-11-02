@@ -32,11 +32,14 @@ public class PointsListFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+    private static final String BUNDLE_ITEM_COUNT = "PointListFragment.bundle_item_count";
+
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
 
     private SQLiteDatabase db = null;
+    private PointCardAdapter pointCardAdapter = null;
 
     private OnFragmentInteractionListener mListener;
 
@@ -93,8 +96,12 @@ public class PointsListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         RecyclerView rv = (RecyclerView)inflater.inflate(R.layout.fragment_points_list, container, false);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        rv.setLayoutManager(layoutManager);
+        Points points = null;
+        if (savedInstanceState != null) {
+            points = new PointsDummy(savedInstanceState.getInt(BUNDLE_ITEM_COUNT));
+        }
+        pointCardAdapter = new PointCardAdapter(points, mListener);
+        rv.setAdapter(pointCardAdapter);
         UpdateRecyclerView();
         return rv;
     }
@@ -124,31 +131,31 @@ public class PointsListFragment extends Fragment {
     }
 
     void UpdateRecyclerView() {
-        AsyncTask<Void, Void, PointCardAdapter> task = new AsyncTask<Void, Void, PointCardAdapter>() {
+        AsyncTask<Void, Void, Points> task = new AsyncTask<Void, Void, Points>() {
             @Override
-            protected PointCardAdapter doInBackground(Void... params) {
+            protected Points doInBackground(Void... params) {
                 if (db == null) {
                     PointsDatabaseHelper dbh = new PointsDatabaseHelper(getContext());
                     db = dbh.getWritableDatabase();
                 }
                 Points points = new Points(db);
-                PointCardAdapter adapter = new PointCardAdapter(points, mListener);
-                adapter.getItemCount();
-                return adapter;
+                points.getCount();
+                return (points);
             }
 
             @Override
-            protected void onPostExecute(PointCardAdapter adapter) {
-                super.onPostExecute(adapter);
-                RecyclerView rv = (RecyclerView)getView();
-                rv.setAdapter(adapter);
+            protected void onPostExecute(Points dataProvider) {
+                super.onPostExecute(dataProvider);
+                pointCardAdapter.changeDataProvider(dataProvider);
             }
         };
         task.execute();
     }
 
-
-    private void openDatabase() {
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(BUNDLE_ITEM_COUNT, pointCardAdapter.getItemCount());
     }
 
     /**

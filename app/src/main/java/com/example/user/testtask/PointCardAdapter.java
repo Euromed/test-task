@@ -65,8 +65,22 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
         });
     }
 
+    void changeDataProvider (Points points) {
+        int oldCount = getItemCount();
+        this.points = points;
+        if (oldCount == getItemCount()) {
+            notifyItemRangeChanged(0, oldCount);
+            return;
+        }
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemCount() {
-        return points.getCount();
+        if (points == null) {
+            return (0);
+        }
+        return (points.getCount());
     }
+
 }

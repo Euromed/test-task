@@ -7,4 +7,5 @@
     tools:context=".PointsListFragment"
     android:id="@+id/edit_view"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    app:layoutManager="android.support.v7.widget.LinearLayoutManager"
     android:scrollbars="vertical" />

@@ -90,7 +90,7 @@ public class PointDetailActivity extends AppCompatActivity
                 double longitude = asr.point.getLongitude();
 
                 ImageView headerMap = (ImageView)activity.findViewById(R.id.header_image);
-                MapHelper.LoadStatic(headerMap, latitude, longitude);
+                MapHelper.LoadStatic(latitude, longitude, headerMap);
 
                 TextView latitudeView = (TextView)activity.findViewById(R.id.latitude_edit);
                 String str = "";

@@ -26,7 +26,7 @@ public class PointsDatabaseHelper extends SQLiteOpenHelper {
     }
 
     public static final String tblPoints = "points";
-    public static final String fltPointId = "point_id";
+    public static final String fldPointId = "point_id";
     public static final String fldLatitude = "latitude";
     public static final String fldLongitude = "longitude";
     public static final String fldDescription = "description";

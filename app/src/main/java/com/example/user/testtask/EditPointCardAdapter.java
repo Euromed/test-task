@@ -5,6 +5,7 @@ package com.example.user.testtask;
  */
 
 import android.content.Context;
+import android.os.Parcelable;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -31,23 +32,6 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
         public void onStarButtonClick(int image);
     }
 
-    static class DynCardView extends CardView {
-        public DynCardView(Context context) {
-            super(context);
-            //initialize(context, null, 0);
-        }
-
-        public DynCardView(Context context, AttributeSet attrs) {
-            super(context, attrs);
-            //initialize(context, attrs, 0);
-        }
-
-        public DynCardView(Context context, AttributeSet attrs, int defStyleAttr) {
-            super(context, attrs, defStyleAttr);
-            //initialize(context, attrs, defStyleAttr);
-        }
-    }
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private CardView cardView;
         public ViewHolder(CardView v) {
@@ -67,14 +51,8 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
     @Override
     public EditPointCardAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                               int viewType) {
-        CardView v = new CardView(parent.getContext()) {
-            @Override
-            protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-                super.onLayout(changed, left, top, right, bottom);
-            }
-        };
-        //CardView v = (CardView) LayoutInflater.from(parent.getContext())
-        //        .inflate(viewType == 0 ? R.layout.point_edit_card : R.layout.image_card, parent, false);
+        CardView v = (CardView) LayoutInflater.from(parent.getContext())
+                .inflate(viewType == 0 ? R.layout.point_edit_card : R.layout.image_card, parent, false);
         ViewHolder vh = new ViewHolder(v);
         return vh;
     }
@@ -115,7 +93,7 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
 
             if (!isNaN(latitude) && !isNaN(longitude)) {
                 ImageView image = (ImageView) v.findViewById(R.id.map_image);
-                MapHelper.LoadStatic(image, latitude, longitude);
+                MapHelper.LoadStatic(latitude, longitude, image);
             }
 
             String lastVisited = point.getLastVisited();
