@@ -277,6 +277,7 @@ public class Point {
             protected void onPostExecute(Boolean hasUpdated) {
                 super.onPostExecute(hasUpdated);
                 if (hasUpdated) {
+                    fillOldValues();
                     notifyUpdateAll();
                 }
             }
