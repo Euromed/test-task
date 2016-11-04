@@ -29,8 +29,8 @@ public class PointsDatabaseHelper extends SQLiteOpenHelper {
     public static final String fldPointId = "point_id";
     public static final String fldLatitude = "latitude";
     public static final String fldLongitude = "longitude";
-    public static final String fldDescription = "description";
-    public static final String fldDefaultIamge = "default_image";
+    public static final String fldName = "name";
+    public static final String fldDefaultImage = "default_image";
     public static final String fldLastVisited = "last_visited";
 
     public static final String tblImages = "images";
@@ -44,7 +44,7 @@ public class PointsDatabaseHelper extends SQLiteOpenHelper {
                     "point_id integer primary key autoincrement," +
                     "latitude real," +
                     "longitude real," +
-                    "description text," +
+                    "name text," +
                     "last_visited date, unique(latitude, longitude));");
             db.execSQL("create table images (" +
                     "image_id integer primary key autoincrement," +
