@@ -15,7 +15,7 @@
     <string name="hint_place">Place</string>
     <string name="hint_last_visited">Last visited</string>
 
-    <string name="error_point_name_not_set">Caption isn't set</string>
+    <string name="error_point_name_not_set">Caption isn\'t set</string>
     <string name="warning_point_name_duplicate">Caption already exists</string>
     <string name="error_latitude_out_of_range">Latitude must be in [-90; 90]</string>
     <string name="error_latitude_format">Latitude format must be ±DDMMSS.SSS</string>

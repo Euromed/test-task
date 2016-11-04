@@ -18,6 +18,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import java.text.*;
+
 import us.fatehi.pointlocation6709.Angle;
 import us.fatehi.pointlocation6709.Latitude;
 import us.fatehi.pointlocation6709.Longitude;
@@ -61,7 +63,7 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
     public void onBindViewHolder(ViewHolder holder, final int position) {
         CardView v = holder.cardView;
         if (position == 0) {
-            String name = point.getCaption();
+            String name = point.getName();
             if (name != null) {
                 EditText editText = ((TextInputLayout)v.findViewById(R.id.point_name)).getEditText();
                 editText.setText(name);
@@ -96,7 +98,8 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
                 MapHelper.LoadStatic(latitude, longitude, image);
             }
 
-            String lastVisited = point.getLastVisited();
+            SimpleDateFormat sf = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT); // new SimpleDateFormat(holder.cardView.getResources().getString(R.string.sql_time_format));
+            String lastVisited = sf.format(point.getLastVisited());
             if (lastVisited != null) {
                 EditText editText = ((TextInputLayout)v.findViewById(R.id.datetime_edit)).getEditText();
                 editText.setText(lastVisited);
@@ -122,7 +125,7 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
 
     @Override
     public int getItemCount() {
-        return point.getCount() + 1;
+        return point.getImagesCount() + 1;
     }
 
     @Override

@@ -32,16 +32,17 @@ public class Point {
 
     public static final String BUNDLE_POINT_STATE = "com.example.user.testtask.point.state";
 
-    public interface ErrorsListener {
+    public interface EventsListener {
         void notifyError(int msgType, int msgItem, String msg);
+        void notifyImageInserted(int pos);
+        void notifyImageChanged(int pos);
+        void notifyImageRemoved(int pos);
+        void notifyDataSetChanged();
     }
 
     private static class ImageRow {
-        //boolean dirty = false;
         int id = -1;
         String url = null;
-        //Date timeStamp = null;
-        //String cacheId = null;
     }
 
     private static class State implements Parcelable {
@@ -140,77 +141,23 @@ public class Point {
             }
         };
     }
-/*    private static class State implements Cloneable, Parcelable {
-        //private boolean mDirty = false;
-        private int mPointId = -1;
-        private String mCaption = null;
-        private double mLatitude = Double.NaN;
-        private double mLongitude = Double.NaN;
-        private Calendar mLastVisited = null;
-        private int mDefaultImage = -1;
-        private int mDefaultImageId = -1;
-        private ArrayList<ImageRow> mImages = new ArrayList<ImageRow>();
-
-        private String mOldCaption = null;
-        private double mOldLatitude = Double.NaN;
-        private double mOldLongitude = Double.NaN;
-        private Calendar mOldLastVisited = null;
-        private int mOldDefaultImage = -1;
-        private int mOldDefaultImageId = -1;
-        private ArrayList<ImageRow> mDeletedImages = null;
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel parcel, int i) {
-
-        }
-
-        public static final Creator<State> CREATOR = new Creator<State>() {
-            @Override
-            public State createFromParcel(Parcel parcel) {
-                State rv = new State();
-                return null;
-            }
-
-            @Override
-            public State[] newArray(int size) {
-                return new State[size];
-            }
-        };
-    };*/
 
     private State mState = new State();
 
     private PointsDatabaseHelper mDatabaseHelper;
     private SQLiteDatabase mDB = null;
-    private WeakReference<RecyclerView.Adapter> mAdapterReference = null;
-    private final WeakReference<ErrorsListener> mErrorsListener;
+    private final WeakReference<EventsListener> mEventsListener;
     private final Resources mResources;
-    //private Cursor mPointCursor = null;
-    //private Cursor mImageCursor = null;
-    //private int currentImage = -1;
 
-    public Point(PointsDatabaseHelper dbh, ErrorsListener listener, Resources resources) {
+    public Point(PointsDatabaseHelper dbh, EventsListener listener, Resources resources) {
         this(dbh, listener, resources, -1);
     }
 
-    public Point(PointsDatabaseHelper dbh, ErrorsListener listener, Resources resources, int pointId) {
+    public Point(PointsDatabaseHelper dbh, EventsListener listener, Resources resources, int pointId) {
         mDatabaseHelper = dbh;
-        mErrorsListener = new WeakReference<ErrorsListener>(listener);
+        mEventsListener = new WeakReference<EventsListener>(listener);
         mResources = resources;
         mState.pointId = pointId;
-    }
-
-    public void setAdapter (RecyclerView.Adapter adapter) {
-        mAdapterReference = new WeakReference<RecyclerView.Adapter>(adapter);
-    }
-
-    public void setReport (RecyclerView.Adapter adapter) {
-        mAdapterReference = new WeakReference<RecyclerView.Adapter>(adapter);
     }
 
     public void refresh(Bundle savedInstanceState) {
@@ -282,6 +229,10 @@ public class Point {
                 }
             }
         };
+    }
+
+    void saveState(Bundle bundle) {
+        bundle.putParcelable(BUNDLE_POINT_STATE, mState);
     }
 
     public boolean validate() {
@@ -546,6 +497,10 @@ public class Point {
         return true;
     }
 
+    public String getImageUrl(int pos) {
+        return mState.images.get(pos).url;
+    }
+
     public int getDefaultImage() {
         return mState.defaultImage;
     }
@@ -553,6 +508,10 @@ public class Point {
     public void setDefaultImage(int defaultImage) {
         mState.defaultImage = defaultImage;
         mState.defaultImageId = mState.images.get(defaultImage).id;
+    }
+
+    public int getImagesCount() {
+        return mState.images.size();
     }
 
     public void addImage(String url) {
@@ -567,11 +526,11 @@ public class Point {
         ImageRow imageRow = new ImageRow();
         imageRow.url = url;
         mState.images.add(imageRow);
-        notifyAddCard(mState.images.size());
+        notifyAddImage(mState.images.size() - 1);
     }
 
     public void deleteImage(int pos) {
-        mState.deletedImages.add(mState.images.get(--pos));
+        mState.deletedImages.add(mState.images.get(pos));
         mState.images.remove(pos);
         if (mState.defaultImage == pos) {
             mState.defaultImage = -1;
@@ -580,16 +539,15 @@ public class Point {
         else if (mState.defaultImage > pos){
             --mState.defaultImage;
         }
-        notifyDeleteCard(pos);
+        notifyDeleteImage(pos);
     }
 
     public boolean getDefaultImage(int pos) {
-        return mState.defaultImage == pos - 1;
+        return mState.defaultImage == pos;
     }
 
     public void setDefaultImage(int pos, boolean setDefault) {
         int oldDefaultImage = mState.defaultImage;
-        --pos;
         if (setDefault) {
             mState.defaultImage = pos;
             mState.defaultImageId = mState.images.get(pos).id;
@@ -602,16 +560,15 @@ public class Point {
             return;
         }
         if (oldDefaultImage != -1) {
-            notifyUpdateCard(oldDefaultImage + 1);
+            notifyUpdateImage(oldDefaultImage + 1);
         }
         if (mState.defaultImage != -1) {
-            notifyUpdateCard(mState.defaultImage + 1);
+            notifyUpdateImage(mState.defaultImage + 1);
         }
     }
 
     public void toggleDefaultImage(int pos) {
         int oldDefaultImage = mState.defaultImage;
-        --pos;
         if (pos == oldDefaultImage) {
             mState.defaultImage = -1;
             mState.defaultImageId = -1;
@@ -621,25 +578,21 @@ public class Point {
             mState.defaultImageId = mState.images.get(pos).id;
         }
         if (oldDefaultImage != -1) {
-            notifyUpdateCard(oldDefaultImage + 1);
+            notifyUpdateImage(oldDefaultImage + 1);
         }
         if (mState.defaultImage != -1) {
-            notifyUpdateCard(mState.defaultImage + 1);
+            notifyUpdateImage(mState.defaultImage + 1);
         }
     }
 
-    private RecyclerView.Adapter getAdapter() {
-        if (mAdapterReference == null) {
+    private EventsListener getEventsListener() {
+        if (mEventsListener == null) {
             return null;
         }
-        return mAdapterReference.get();
+        return mEventsListener.get();
     }
-
     private void reportError(int msgType, int itemType, int msgRes) {
-        if (mErrorsListener == null) {
-            return;
-        }
-        ErrorsListener listener = mErrorsListener.get();
+        EventsListener listener = getEventsListener();
         if (listener == null) {
             return;
         }
@@ -712,94 +665,40 @@ public class Point {
         task.execute();
     }
 
-    private void notifyAddCard(int pos) {
-        RecyclerView.Adapter adapter = getAdapter();
-        if (adapter == null) {
+    private void notifyAddImage(int pos) {
+        EventsListener listener = getEventsListener();
+        if (listener == null) {
             return;
         }
-        adapter.notifyItemInserted(pos);
+        listener.notifyImageInserted(pos);
     }
 
-    private void notifyDeleteCard(int pos) {
-        RecyclerView.Adapter adapter = getAdapter();
-        if (adapter == null) {
+    private void notifyDeleteImage(int pos) {
+        EventsListener listener = getEventsListener();
+        if (listener == null) {
             return;
         }
-        adapter.notifyItemRemoved(pos);
+        listener.notifyImageRemoved(pos);
     }
 
-    private void notifyUpdateCard(int pos) {
-        RecyclerView.Adapter adapter = getAdapter();
-        if (adapter == null) {
+    private void notifyUpdateImage(int pos) {
+        EventsListener listener = getEventsListener();
+        if (listener == null) {
             return;
         }
-        adapter.notifyItemChanged(pos);
+        listener.notifyImageChanged(pos);
     }
 
     private void notifyUpdateAll() {
-        RecyclerView.Adapter adapter = getAdapter();
-        if (adapter == null) {
+        EventsListener listener = getEventsListener();
+        if (listener == null) {
             return;
         }
-        adapter.notifyDataSetChanged();
+        listener.notifyDataSetChanged();
     }
 
     public void LoadImage(ImageView v, int pos) {
-        BitmapWorkerTask.loadBitmap(mState.images.get(pos - 1).url, v);
+        BitmapWorkerTask.loadBitmap(mState.images.get(pos).url, v);
     }
 
-    /*   public String getCaption () {
-        return getPointCursor().getString(0);
-    }
-
-    public double getLatitude () {
-        return getPointCursor().getDouble(1);
-    }
-
-    public double getLongitude () {
-        return getPointCursor().getDouble(2);
-    }
-
-    public String getLastVisited () {
-        return getPointCursor().getString(3);
-    }
-
-    public int getDefaultImage () {
-        Cursor pointCursor = getPointCursor();
-        int defaultImage = 0;
-        if (!pointCursor.isNull(4)) {
-            defaultImage = pointCursor.getInt(4);
-        }
-        return defaultImage;
-    }
-
-    public int getCount() {
-        return getImageCursor().getCount();
-    }
-
-
-    Cursor getPointCursor() {
-        if (pointCursor == null) {
-            pointCursor = db.query(PointsDatabaseHelper.tblPoints,
-                    new String[] {PointsDatabaseHelper.fldDescription, PointsDatabaseHelper.fldLatitude,
-                            PointsDatabaseHelper.fldLongitude, PointsDatabaseHelper.fldLastVisited,
-                            PointsDatabaseHelper.fldDefaultIamge},
-                    "point_id=?",
-                    new String[] {Integer.toString(pointId)},
-                    null, null, null);
-        }
-        pointCursor.moveToFirst();
-        return pointCursor;
-    }
-
-    Cursor getImageCursor() {
-        if (imageCursor == null) {
-            imageCursor = db.query(PointsDatabaseHelper.tblImages,
-                    new String[] {PointsDatabaseHelper.fldImageId, PointsDatabaseHelper.fldImage},
-                    "point = ?",
-                    new String[] {Integer.toString(pointId)},
-                    null, null, PointsDatabaseHelper.fldImageId);
-        }
-        return imageCursor;
-    }*/
 }

@@ -73,7 +73,7 @@ public class Points {
     Cursor getPointsCursor() {
         if (pointsCursor == null) {
             pointsCursor = db.query(PointsDatabaseHelper.tblPoints,
-                    new String[] {PointsDatabaseHelper.fltPointId, PointsDatabaseHelper.fldDescription, PointsDatabaseHelper.fldDefaultIamge},
+                    new String[] {PointsDatabaseHelper.fldPointId, PointsDatabaseHelper.fldName, PointsDatabaseHelper.fldDefaultImage},
                     null, null, null, null, null);
         }
         return pointsCursor;
