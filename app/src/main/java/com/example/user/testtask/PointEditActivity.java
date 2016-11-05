@@ -2,29 +2,19 @@ package com.example.user.testtask;
 
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import us.fatehi.pointlocation6709.Angle;
-import us.fatehi.pointlocation6709.Latitude;
-import us.fatehi.pointlocation6709.Longitude;
-import us.fatehi.pointlocation6709.format.PointLocationFormatType;
-import us.fatehi.pointlocation6709.format.PointLocationFormatter;
 
 public class PointEditActivity extends AppCompatActivity
-        implements EditPointCardAdapter.OnCardInteractionListener
+        implements EditPointCardAdapter.OnCardInteractionListener,
+        Point.EventsListener
 {
 
     public static final String EXTRA_POINT = "point";
@@ -35,11 +25,33 @@ public class PointEditActivity extends AppCompatActivity
     private int pointId = -1;
     private String pointName = null;
     private SQLiteDatabase db = null;
-    private RecyclerView recyclerView = null;
+    private RecyclerView mRecyclerView = null;
+    private EditPointCardAdapter mAdapter = null;
+    private Point mPoint = null;
 
-    private class AsyncResult {
-        Point point;
-        EditPointCardAdapter adapter;
+    @Override
+    public void notifyError(int msgType, int msgItem, String msg) {
+
+    }
+
+    @Override
+    public void notifyImageInserted(int pos) {
+        mAdapter.notifyItemInserted(pos + 1);
+    }
+
+    @Override
+    public void notifyImageChanged(int pos) {
+        mAdapter.notifyItemChanged(pos + 1);
+    }
+
+    @Override
+    public void notifyImageRemoved(int pos) {
+        mAdapter.notifyItemRemoved(pos + 1);
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -73,48 +85,12 @@ public class PointEditActivity extends AppCompatActivity
             pointName = savedInstanceState.getString(EXTRA_NAME);
         }
 
-        recyclerView = (RecyclerView)findViewById(R.id.edit_view);
+        mRecyclerView = (RecyclerView)findViewById(R.id.edit_view);
         PointsDatabaseHelper dbh = new PointsDatabaseHelper(this);
-        Point point = new Point(dbh, this, getResources(), pointId);
-        EditPointCardAdapter cardAdapter = new EditPointCardAdapter(point, this);
-        point.setAdapter(cardAdapter);
-        recyclerView.setAdapter(cardAdapter);
-        point.refresh(savedInstanceState);
-        /*final PointEditActivity activity = this;
-        AsyncTask<Void, Void, AsyncResult> task = new AsyncTask<Void, Void, AsyncResult>() {
-            Parcelable savedRecyclerLayoutState = null;
-
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                if (savedInstanceState != null) {
-                    savedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
-                }
-            }
-
-            @Override
-            protected AsyncResult doInBackground(Void... params) {
-                AsyncResult asr = new AsyncResult();
-                if (db == null) {
-                    db = dbh.getWritableDatabase();
-                }
-                asr.point = new Point(db, pointId);
-                asr.adapter = new EditPointCardAdapter(asr.point, activity);
-                asr.adapter.getItemCount();
-                return asr;
-            }
-
-            @Override
-            protected void onPostExecute(AsyncResult asr) {
-                super.onPostExecute(asr);
-                //RecyclerView rv = (RecyclerView)activity.findViewById(R.id.edit_view);
-                recyclerView.setAdapter(asr.adapter);
-                if (savedRecyclerLayoutState != null) {
-                    recyclerView.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
-                }
-            }
-        };
-        task.execute();*/
+        mPoint = new Point(dbh, this, getResources(), pointId);
+        mAdapter = new EditPointCardAdapter(mPoint, this);
+        mRecyclerView.setAdapter(mAdapter);
+        mPoint.refresh(savedInstanceState);
     }
 
     @Override
@@ -128,22 +104,17 @@ public class PointEditActivity extends AppCompatActivity
         super.onSaveInstanceState(outState);
         outState.putInt(EXTRA_POINT, pointId);
         outState.putString(EXTRA_NAME, getTitle().toString());
+        mPoint.saveState(outState);
     }
-
-/*    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        Parcelable savedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
-        recyclerView.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
-    }*/
 
     @Override
     public void onImageClick(int image) {
-
+        String url = mPoint.getImageUrl(image - 1);
+        Util.startExternalImageViewer(url, this);
     }
 
     @Override
     public void onStarButtonClick(int image) {
-
+        mPoint.toggleDefaultImage(image - 1);
     }
 }

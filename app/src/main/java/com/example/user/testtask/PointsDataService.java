@@ -209,7 +209,7 @@ public class PointsDataService extends IntentService {
         }
 
         Cursor pointCursor = db.query(PointsDatabaseHelper.tblPoints,
-                new String[] {PointsDatabaseHelper.fltPointId},
+                new String[] {PointsDatabaseHelper.fldPointId},
                 "latitude = ? and longitude = ?",
                 new String[] {Double.toString(latitude), Double.toString(longitude)},
                 null, null, null);
@@ -225,7 +225,7 @@ public class PointsDataService extends IntentService {
         ContentValues values = new ContentValues(4);
         values.put(PointsDatabaseHelper.fldLatitude, latitude);
         values.put(PointsDatabaseHelper.fldLongitude, longitude);
-        values.put(PointsDatabaseHelper.fldDescription, description);
+        values.put(PointsDatabaseHelper.fldName, description);
         SimpleDateFormat formatter = new SimpleDateFormat("yyy-MM-dd HH:mm:sszzz");
         values.put(PointsDatabaseHelper.fldLastVisited, formatter.format(lastVisited));
         if (pointId == -1) {

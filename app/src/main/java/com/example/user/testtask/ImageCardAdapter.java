@@ -31,13 +31,11 @@ public class ImageCardAdapter extends RecyclerView.Adapter<ImageCardAdapter.View
 
     private Point mPoint;
     private final OnCardInteractionListener mListener;
-    private final Resources mResources;
     private Drawable starDefault = null;
     private Drawable noStar = null;
 
-    public ImageCardAdapter(Point pointSource, Resources resources, OnCardInteractionListener listener) {
+    public ImageCardAdapter(Point pointSource, OnCardInteractionListener listener) {
         mPoint = pointSource;
-        mResources = resources;
         mListener = listener;
     }
 
@@ -53,19 +51,10 @@ public class ImageCardAdapter extends RecyclerView.Adapter<ImageCardAdapter.View
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
         CardView v = holder.cardView;
+
         ImageButton starButton = (ImageButton)v.findViewById(R.id.star_button);
-        if (mPoint.getDefaultImage(position)) {
-            if (starDefault != null) {
-                starDefault = mResources.getDrawable(R.drawable.ic_star_white_24px);
-            }
-            starButton.setImageDrawable(starDefault);
-        }
-        else {
-            if (noStar != null) {
-                noStar = mResources.getDrawable(R.drawable.ic_star_border_white_24px);
-            }
-            starButton.setImageDrawable(noStar);
-        }
+        boolean isDefaultImage = mPoint.getDefaultImage(position - 1);
+        starButton.setImageResource(isDefaultImage ? R.drawable.ic_star_white_24px : R.drawable.ic_star_white_24px);
         starButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

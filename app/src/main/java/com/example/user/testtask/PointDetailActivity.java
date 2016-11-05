@@ -118,7 +118,7 @@ public class PointDetailActivity extends AppCompatActivity
 
         PointsDatabaseHelper dbh = new PointsDatabaseHelper(this);
         mPoint = new Point(dbh, this, getResources(), mPointId);
-        mAdapter = new ImageCardAdapter(mPoint, getResources(), this);
+        mAdapter = new ImageCardAdapter(mPoint, this);
         RecyclerView rv = (RecyclerView)findViewById(R.id.images_view);
         rv.setAdapter(mAdapter);
         mPoint.refresh(savedInstanceState);
@@ -163,9 +163,7 @@ public class PointDetailActivity extends AppCompatActivity
     @Override
     public void onImageClick(int image) {
         String url = mPoint.getImageUrl(image);
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.parse(url), "image/*");
-        startActivity(intent);
+        Util.startExternalImageViewer(url, this);
     }
 
     @Override
