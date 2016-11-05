@@ -16,6 +16,7 @@ import android.widget.ImageView;
 
 import java.text.*;
 import java.util.Calendar;
+import java.util.concurrent.Exchanger;
 
 import us.fatehi.pointlocation6709.Angle;
 import us.fatehi.pointlocation6709.Latitude;
@@ -42,6 +43,11 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
 
     private Point mPoint;
     private final OnCardInteractionListener mListener;
+    TextInputLayout mNameLayout = null;
+    ImageView mMapImage = null;
+    TextInputLayout mLatitudeLayout = null;
+    TextInputLayout mLongitudeLayout = null;
+    TextInputLayout mLastVisitedLayout = null;
 
     public EditPointCardAdapter(Point pointSource, OnCardInteractionListener listener) {
         mPoint = pointSource;
@@ -62,7 +68,8 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
         CardView v = holder.cardView;
         if (position == 0) {
             String name = mPoint.getName();
-            EditText editText = ((TextInputLayout)v.findViewById(R.id.point_name)).getEditText();
+            mNameLayout = (TextInputLayout)v.findViewById(R.id.point_name);
+            EditText editText = mNameLayout.getEditText();
             if (name != null) {
                 editText.setText(name);
             }
@@ -76,12 +83,14 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
                 }
             });
 
-            final ImageView image = (ImageView) v.findViewById(R.id.map_image);
+            mMapImage = (ImageView) v.findViewById(R.id.map_image);
 
             final double latitude = mPoint.getLatitude();
-            editText = ((TextInputLayout)v.findViewById(R.id.latitude_edit)).getEditText();
+            mLatitudeLayout = (TextInputLayout)v.findViewById(R.id.latitude_edit);
+            editText = mLatitudeLayout.getEditText();
             setLatitudeText(editText, latitude, false);
             editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                ImageView image = mMapImage;
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     EditText editText = (EditText)v;
@@ -100,9 +109,12 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
             });
 
             double longitude = mPoint.getLongitude();
-            editText = ((TextInputLayout)v.findViewById(R.id.longitude_edit)).getEditText();
+            mLongitudeLayout = (TextInputLayout)v.findViewById(R.id.longitude_edit);
+            editText = mLongitudeLayout.getEditText();
             setLongitudeText(editText, longitude, false);
             editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                ImageView image = mMapImage;
+
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     EditText editText = (EditText)v;
@@ -121,12 +133,13 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
             });
 
             if (!isNaN(latitude) && !isNaN(longitude)) {
-                MapHelper.LoadStatic(latitude, longitude, image);
+                MapHelper.LoadStatic(latitude, longitude, mMapImage);
             }
 
-            SimpleDateFormat sf = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT); // new SimpleDateFormat(holder.cardView.getResources().getString(R.string.sql_time_format));
+            final SimpleDateFormat sf = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT); // new SimpleDateFormat(holder.cardView.getResources().getString(R.string.sql_time_format));
             String lastVisited = sf.format(mPoint.getLastVisited());
-            editText = ((TextInputLayout)v.findViewById(R.id.datetime_edit)).getEditText();
+            mLastVisitedLayout = (TextInputLayout)v.findViewById(R.id.datetime_edit);
+            editText = mLastVisitedLayout.getEditText();
             if (lastVisited != null) {
                 editText.setText(lastVisited);
             }
@@ -135,14 +148,15 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
                 public void onFocusChange(View v, boolean hasFocus) {
                     EditText editText = (EditText)v;
                     Calendar lastVisited = mPoint.getLastVisited();
-                    Calendar old = (Calendar)lastVisited.clone();
                     if (!hasFocus) {
-                        longitude = parseLongitude(editText);
-                        mPoint.setLongitude(longitude);
-                    }
-                    setLongitudeText(editText, longitude, hasFocus);
-                    if (old != longitude && !isNaN(latitude) && !isNaN(longitude)) {
-                        MapHelper.LoadStatic(latitude, longitude, image);
+                        try {
+                            lastVisited.setTime(sf.parse(editText.getText().toString()));
+                            editText.setText(sf.format(lastVisited));
+                        }
+                        catch (ParseException e) {
+                            lastVisited.setTimeInMillis(0);
+                        }
+                        mPoint.setLastVisited(lastVisited);
                     }
                 }
             });

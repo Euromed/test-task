@@ -20,15 +20,15 @@ import java.util.Calendar;
  * Created by const on 13.09.2016.
  */
 public class Point {
-    public final int MSG_ERROR      = 1;
-    public final int MSG_WARNING    = 2;
-    public final int MSG_INFO       = 3;
+    public static final int MSG_ERROR      = 1;
+    public static final int MSG_WARNING    = 2;
+    public static final int MSG_INFO       = 3;
 
-    public final int ITEM_WHOLE_POINT   = 0;
-    public final int ITEM_NAME = 1;
-    public final int ITEM_LATITUDE      = 2;
-    public final int ITEM_LONGITUDE     = 3;
-    public final int ITEM_LAST_VISITED  = 4;
+    public static final int ITEM_WHOLE_POINT   = 0;
+    public static final int ITEM_NAME = 1;
+    public static final int ITEM_LATITUDE      = 2;
+    public static final int ITEM_LONGITUDE     = 3;
+    public static final int ITEM_LAST_VISITED  = 4;
 
     public static final String BUNDLE_POINT_STATE = "com.example.user.testtask.point.state";
 
@@ -428,6 +428,7 @@ public class Point {
             reportError(MSG_ERROR, ITEM_NAME, R.string.error_point_name_not_set);
             return false;
         }
+        reportError(MSG_INFO, ITEM_NAME);
         return true;
     }
 
@@ -451,6 +452,7 @@ public class Point {
             reportError(MSG_ERROR, ITEM_LATITUDE, R.string.error_latitude_out_of_range);
             return false;
         }
+        reportError(MSG_INFO, ITEM_LATITUDE);
         return true;
     }
 
@@ -474,6 +476,7 @@ public class Point {
             reportError(MSG_ERROR, ITEM_LONGITUDE, R.string.error_longitude_out_of_range);
             return false;
         }
+        reportError(MSG_INFO, ITEM_LONGITUDE);
         return true;
     }
 
@@ -494,6 +497,7 @@ public class Point {
             reportError(MSG_ERROR, ITEM_LAST_VISITED, R.string.error_last_visited_format);
             return false;
         }
+        reportError(MSG_INFO, ITEM_LAST_VISITED);
         return true;
     }
 
@@ -591,6 +595,7 @@ public class Point {
         }
         return mEventsListener.get();
     }
+
     private void reportError(int msgType, int itemType, int msgRes) {
         EventsListener listener = getEventsListener();
         if (listener == null) {
@@ -598,6 +603,14 @@ public class Point {
         }
         String msg = mResources.getString(msgRes);
         listener.notifyError(msgType, itemType, msg);
+    }
+
+    private void reportError(int msgType, int itemType) {
+        EventsListener listener = getEventsListener();
+        if (listener == null) {
+            return;
+        }
+        listener.notifyError(msgType, itemType, null);
     }
 
     private SQLiteDatabase getDatabase() {

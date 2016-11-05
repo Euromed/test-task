@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -31,7 +32,31 @@ public class PointEditActivity extends AppCompatActivity
 
     @Override
     public void notifyError(int msgType, int msgItem, String msg) {
-
+        TextInputLayout itemLayout = null;
+        switch (msgItem) {
+            case Point.ITEM_WHOLE_POINT:
+                break;
+            case Point.ITEM_NAME:
+                itemLayout = mAdapter.mNameLayout;
+                break;
+            case Point.ITEM_LATITUDE:
+                itemLayout = mAdapter.mLatitudeLayout;
+                break;
+            case Point.ITEM_LONGITUDE:
+                itemLayout = mAdapter.mLongitudeLayout;
+                break;
+            case Point.ITEM_LAST_VISITED:
+                itemLayout = mAdapter.mLastVisitedLayout;
+                break;
+        }
+        if (itemLayout != null) {
+            if (msgType == Point.MSG_INFO) {
+                itemLayout.setErrorEnabled(false);
+            }
+            if (msgType == Point.MSG_ERROR || msgType == Point.MSG_WARNING) {
+                itemLayout.setError(msg);
+            }
+        }
     }
 
     @Override
