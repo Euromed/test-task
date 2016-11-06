@@ -3,13 +3,16 @@ package com.example.user.testtask;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,11 +45,13 @@ public class PointsListFragment extends Fragment {
     private PointCardAdapter pointCardAdapter = null;
 
     private OnFragmentInteractionListener mListener;
+    private PointsBroadcastReceiver mBroadcastReceiver;
 
     private class PointsBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.i("PBR", "Broadcast received - " + intent.getAction());
             switch (intent.getAction()) {
             case PointsDataService.BROADCAST_RESULT:
                 if (intent.getIntExtra(PointsDataService.EXTRA_RESULT, 0) > 0) {
@@ -102,8 +107,17 @@ public class PointsListFragment extends Fragment {
         }
         pointCardAdapter = new PointCardAdapter(points, mListener);
         rv.setAdapter(pointCardAdapter);
+
+        mBroadcastReceiver = new PointsBroadcastReceiver();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(mBroadcastReceiver, new IntentFilter(PointsDataService.BROADCAST_RESULT));
         UpdateRecyclerView();
         return rv;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mBroadcastReceiver);
     }
 
     // TODO: Rename method, update argument and hook method into UI event

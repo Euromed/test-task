@@ -38,6 +38,7 @@ public class Point {
         void notifyImageChanged(int pos);
         void notifyImageRemoved(int pos);
         void notifyDataSetChanged();
+        void notifyChangesSaved();
     }
 
     private static class ImageRow {
@@ -179,7 +180,7 @@ public class Point {
                         new String[] {PointsDatabaseHelper.fldName, PointsDatabaseHelper.fldLatitude,
                                 PointsDatabaseHelper.fldLongitude, PointsDatabaseHelper.fldLastVisited,
                                 PointsDatabaseHelper.fldDefaultImage},
-                        "point_id=?",
+                        "point_id = ?",
                         new String[] {Integer.toString(mState.pointId)},
                         null, null, null);
                 if (cursor.getCount() != 1) {
@@ -229,6 +230,7 @@ public class Point {
                 }
             }
         };
+        task.execute();
     }
 
     void saveState(Bundle bundle) {
@@ -240,17 +242,18 @@ public class Point {
                validateLongitude() && validateLastVisited();
     }
 
-    public void save() {
+    public boolean save() {
         if (!validate()) {
-            return;
+            return false;
         }
 
         UpdateScript updateScript = getUpdates();
         if (updateScript.size() == 0) {
-            return;
+            return false;
         }
 
         makeUpdates(updateScript);
+        return true;
     }
 
     private static class UpdateStep {

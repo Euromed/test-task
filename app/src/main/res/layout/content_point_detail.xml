@@ -23,6 +23,7 @@
         <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/images_view" />
+            android:id="@+id/images_view"
+            app:layoutManager="android.support.v7.widget.LinearLayoutManager"/>
     </LinearLayout>
 </android.support.v4.widget.NestedScrollView>

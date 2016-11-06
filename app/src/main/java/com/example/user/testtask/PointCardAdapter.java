@@ -80,7 +80,7 @@ public class PointCardAdapter extends RecyclerView.Adapter<PointCardAdapter.View
         if (points == null) {
             return (0);
         }
-        return (points.getCount());
+        return (points.getCount() + 1);
     }
 
 }

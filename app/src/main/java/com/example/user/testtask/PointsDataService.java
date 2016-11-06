@@ -22,6 +22,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.logging.SimpleFormatter;
 
 /* TODO: сделать описание параметров службы и возврата результата через LocalBroadcastManager */
@@ -100,6 +101,7 @@ public class PointsDataService extends IntentService {
         Intent resultIntent = new Intent(BROADCAST_RESULT);
         resultIntent.putExtra(EXTRA_RESULT, loadedItemCount);
         LocalBroadcastManager.getInstance(this).sendBroadcast(resultIntent);
+        Log.i("PBR", "Broadcast send - " + resultIntent.getAction());
     }
 
     private int downloadJson(String jsonUrl, boolean forceReplace, SQLiteDatabase db)
@@ -191,7 +193,7 @@ public class PointsDataService extends IntentService {
             }
             else if (name.equals("lastVisited")) {
                 // Thu Apr 29 05:25:29 +0400 2010
-                SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM d HH:mm:ss zzz yyyy");
+                SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM d HH:mm:ss zzz yyyy", Locale.US);
                 lastVisited = formatter.parse(reader.nextString());
             }
             else {

@@ -4,6 +4,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.widget.ImageView;
 
+import java.util.Locale;
+
 /**
  * Created by User on 15.07.2016.
  */

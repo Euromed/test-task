@@ -59,7 +59,17 @@ public class PointDetailActivity extends AppCompatActivity
     }
 
     @Override
+    public void notifyChangesSaved() {
+
+    }
+
+    @Override
     public void notifyDataSetChanged() {
+        updateFields();
+        mAdapter.notifyDataSetChanged();
+    }
+
+    void updateFields() {
         double latitude = mPoint.getLatitude();
         double longitude = mPoint.getLongitude();
 
@@ -86,7 +96,7 @@ public class PointDetailActivity extends AppCompatActivity
 
         TextView lastVisited = (TextView)findViewById(R.id.last_visited);
         SimpleDateFormat sf = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-        lastVisited.setText(sf.format(mPoint.getLastVisited()));
+        lastVisited.setText(sf.format(mPoint.getLastVisited().getTime()));
     }
 
     @Override
@@ -122,6 +132,9 @@ public class PointDetailActivity extends AppCompatActivity
         RecyclerView rv = (RecyclerView)findViewById(R.id.images_view);
         rv.setAdapter(mAdapter);
         mPoint.refresh(savedInstanceState);
+        if (savedInstanceState != null) {
+            updateFields();
+        }
     }
 
     @Override
