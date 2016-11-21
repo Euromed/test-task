@@ -5,6 +5,7 @@ import android.test.ApplicationTestCase;
 import android.text.SpannableString;
 import android.util.Log;
 
+import com.ibm.icu.util.Calendar;
 import com.ibm.icu.util.GregorianCalendar;
 
 /**
@@ -13,11 +14,25 @@ import com.ibm.icu.util.GregorianCalendar;
 public class ApplicationTest extends ApplicationTestCase<Application> {
     public ApplicationTest() {
         super(Application.class);
-        testFormatDateTime();
     }
 
     public void testFormatDateTime() {
         SpannableString v = Util.formatDateTimeTimeZone(GregorianCalendar.getInstance());
         Log.i("TFDT", v.toString());
+    }
+
+    public void testParseDateTime() throws Exception {
+        Calendar cal;
+        SpannableString info;
+
+        cal = Util.parseDateTime("01.10.1980 22:40-8");
+        assertNotNull(cal);
+        info = Util.formatDateTimeTimeZone(cal);
+        Log.i("TPDT", info.toString());
+
+        cal = Util.parseDateTime("01.10.1980, 22:40");
+        assertNotNull(cal);
+        info = Util.formatDateTimeTimeZone(cal);
+        Log.i("TPDT", info.toString());
     }
 }
