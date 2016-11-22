@@ -29,13 +29,13 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/timePicker" />
 
-            <LinearLayout
+            <ListView
                 android:id="@+id/time_zone_picker"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-            </LinearLayout>
+            </ListView>
         </FrameLayout>
     </LinearLayout>
 </TabHost>
