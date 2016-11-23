@@ -23,7 +23,7 @@ public class Util {
         activity.startActivity(intent);
     }
 
-    private static final String patternTimeZone = "XXXXX";
+    public static final String patternTimeZone = "XXXXX";
 
     public static SpannableString formatDateTimeTimeZone(Calendar v) {
         SimpleDateFormat dateFormat = getDateTimeInstance();
@@ -37,6 +37,16 @@ public class Util {
         SpannableString rv = new SpannableString(resultString);
         rv.setSpan(new SubscriptSpan(), startSubscript, endSubscript, Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
         return rv;
+    }
+
+    public static String formatDate(Calendar v) {
+        SimpleDateFormat dateFormat = (SimpleDateFormat)SimpleDateFormat.getDateInstance(DateFormat.SHORT);
+        return dateFormat.format(v);
+    }
+
+    public static String formatTime(Calendar v) {
+        SimpleDateFormat dateFormat = (SimpleDateFormat)SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
+        return dateFormat.format(v);
     }
 
     public static Calendar parseDateTime(String src) {
