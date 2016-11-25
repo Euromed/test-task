@@ -175,14 +175,35 @@ public class DateTimePickerDialog extends DialogFragment
         TimeZoneAdapter timeZoneAdapter = new TimeZoneAdapter(getContext());
         timeZonesListView.setAdapter(timeZoneAdapter);
         int offset = newDate.getTimeZone().getRawOffset();
+        TimeZoneRow timeZoneRow = null;
         for (int i = 0; i < timeZoneAdapter.getCount(); ++i) {
-            TimeZoneRow timeZoneRow = timeZoneAdapter.getItem(i);
+            timeZoneRow = timeZoneAdapter.getItem(i);
             if (timeZoneRow.intOffset == offset) {
                 timeZonesListView.setSelection(i);
                 break;
             }
         }
         timeZonesListView.setOnItemSelectedListener(this);
+
+        mDateTitle = new  TextView(getContext());
+        mTimeTitle = new  TextView(getContext());
+        mTimeZoneTitle = new  TextView(getContext());
+        mDateTitle.setText(Util.formatDate(newDate));
+        mTimeTitle.setText(Util.formatTime(newDate));
+        mTimeZoneTitle.setText(timeZoneRow.offset);
+
+        TabHost tabHost = (TabHost)view.findViewById(R.id.tabhost);
+        tabHost.setup();
+        tabHost.addTab(tabHost.newTabSpec("DatePicker")
+            .setContent(R.id.datePicker)
+            .setIndicator("1"/*mDateTitle*/));
+        tabHost.addTab(tabHost.newTabSpec("TimePicker")
+                .setContent(R.id.timePicker)
+                .setIndicator("2"/*mTimeTitle*/));
+        tabHost.addTab(tabHost.newTabSpec("TimeZoneList")
+                .setContent(R.id.time_zone_picker)
+                .setIndicator("3"/*mTimeZoneTitle*/));
+        TabWidget tabWidget = tabHost.getTabWidget();
 
         view.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -193,7 +214,6 @@ public class DateTimePickerDialog extends DialogFragment
                 }
             }
         });
-
         view.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -233,14 +253,14 @@ public class DateTimePickerDialog extends DialogFragment
     @Override
     public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
         newDate.set(year, monthOfYear, dayOfMonth);
-        getDateTitle().setText(Util.formatDate(newDate));
+        mDateTitle.setText(Util.formatDate(newDate));
     }
 
     @Override
     public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
         newDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
         newDate.set(Calendar.MINUTE, minute);
-        getTimeTitle().setText(Util.formatTime(newDate));
+        mTimeTitle.setText(Util.formatTime(newDate));
     }
 
     @Override
@@ -248,7 +268,7 @@ public class DateTimePickerDialog extends DialogFragment
         TimeZoneRow item = (TimeZoneRow)parent.getItemAtPosition(position);
         TimeZone newTimeZone = TimeZone.getTimeZone(item.id);
         newDate.setTimeZone(newTimeZone);
-        getTimeZoneTitle().setText(item.offset);
+        mTimeZoneTitle.setText(item.offset);
     }
 
     @Override
@@ -265,33 +285,9 @@ public class DateTimePickerDialog extends DialogFragment
     @Override
     public void onDismiss(DialogInterface dialog) {
         super.onDismiss(dialog);
-        mResultListener.onDateTimeSubmit(oldDate.equals(newDate) ? null : newDate);
+        if (mResultListener != null) {
+            mResultListener.onDateTimeSubmit(oldDate.equals(newDate) ? null : newDate);
+        }
     }
 
-    public TextView getDateTitle() {
-        if (mDateTitle == null) {
-            TabHost tabHost = (TabHost)getView().findViewById(R.id.tabhost);
-            TabWidget tabWidget = tabHost.getTabWidget();
-            mDateTitle = (TextView)tabWidget.getChildTabViewAt(0);
-        }
-        return mDateTitle;
-    }
-
-    public TextView getTimeTitle() {
-        if (mDateTitle == null) {
-            TabHost tabHost = (TabHost) getView().findViewById(R.id.tabhost);
-            TabWidget tabWidget = tabHost.getTabWidget();
-            mTimeTitle = (TextView) tabWidget.getChildTabViewAt(1);
-        }
-        return mTimeTitle;
-    }
-
-    public TextView getTimeZoneTitle() {
-        if (mDateTitle == null) {
-            TabHost tabHost = (TabHost) getView().findViewById(R.id.tabhost);
-            TabWidget tabWidget = tabHost.getTabWidget();
-            mTimeZoneTitle = (TextView) tabWidget.getChildTabViewAt(2);
-        }
-        return mTimeZoneTitle;
-    }
 }

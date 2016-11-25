@@ -82,7 +82,7 @@ DateTimePickerDialog.ResultListener{
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 Calendar cal = Calendar.getInstance();
-                DateTimePickerDialog.showDialog(cal, getSupportFragmentManager(), true);
+                DateTimePickerDialog.showDialog(cal, getSupportFragmentManager(), false);
             }
         });
 
