@@ -50,56 +50,11 @@ public class DateTimePickerDialog extends DialogFragment
     TextView mTimeTitle = null;
     TextView mTimeZoneTitle = null;
 
-    private static class TimeZoneRow implements Comparable{
-        final String id;
-        final String name;
-        final String offset;
-        final int intOffset;
-
-        TimeZoneRow(String id, String name, String offset, int intOffset) {
-            this.id = id;
-            this.name = name;
-            this.offset = offset;
-            this.intOffset = intOffset;
-        }
-
-        @Override
-        public int compareTo(Object another) {
-            if (another == null && another instanceof TimeZoneRow) {
-                return 1;
-            }
-            TimeZoneRow c = (TimeZoneRow)another;
-            int rv = new Integer(intOffset).compareTo(c.intOffset);
-            if (rv == 0) {
-                rv = name.compareTo(c.name);
-            }
-            return rv;
-        }
-
-        static TimeZoneRow[] getTimeZones() {
-            String[] timeZonesIds = TimeZone.getAvailableIDs();
-            TimeZoneRow[] timeZones = new TimeZoneRow[timeZonesIds.length];
-            SimpleDateFormat formatter = (SimpleDateFormat)SimpleDateFormat.getInstance();
-            formatter.applyPattern(Util.patternTimeZone);
-            Calendar cal = GregorianCalendar.getInstance();
-            for (int i = 0; i < timeZonesIds.length; ++i) {
-                String id = timeZonesIds[i];
-                TimeZone timeZone = TimeZone.getTimeZone(id);
-                cal.setTimeZone(timeZone);
-                String name = timeZone.getDisplayName();
-                String offset = formatter.format(cal);
-                timeZones[i] = new TimeZoneRow(id, name, offset, timeZone.getRawOffset());
-            }
-            Arrays.sort(timeZones);
-            return timeZones;
-        }
-    }
-
-    private class TimeZoneAdapter extends ArrayAdapter<TimeZoneRow> {
+    private class TimeZoneAdapter extends ArrayAdapter<Util.TimeZoneRow> {
         private final LayoutInflater mInflater;
 
         TimeZoneAdapter(Context context) {
-            super(context, R.layout.list_view_row_time_zone, TimeZoneRow.getTimeZones());
+            super(context, R.layout.list_view_row_time_zone, Util.getTimeZones());
             mInflater = LayoutInflater.from(context);
         }
 
@@ -111,7 +66,7 @@ public class DateTimePickerDialog extends DialogFragment
                 rv = mInflater.inflate(R.layout.list_view_row_time_zone, parent, false);
             }
 
-            TimeZoneRow timeZoneRow = getItem(position);
+            Util.TimeZoneRow timeZoneRow = getItem(position);
 
             TextView textView = (TextView)rv.findViewById(R.id.time_zone_name);
             textView.setText(timeZoneRow.name);
@@ -129,14 +84,14 @@ public class DateTimePickerDialog extends DialogFragment
         DateTimePickerDialog dlg = new DateTimePickerDialog();
         dlg.setArguments(arg);
         if (fullScreen) {
-            dlg.show(fragmentManager, "dateTimePickerDialog");
-        }
-        else {
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
             transaction.add(android.R.id.content, dlg)
                     .addToBackStack(null)
                     .commit();
+        }
+        else {
+            dlg.show(fragmentManager, "dateTimePickerDialog");
         }
     }
 
@@ -161,7 +116,7 @@ public class DateTimePickerDialog extends DialogFragment
             newDate = (Calendar)savedInstanceState.getSerializable(BUNDLE_NEW_DATE);
         }
 
-        View view = inflater.inflate(R.layout.dialog_fragment_date_time_picker, container);
+        View view = inflater.inflate(R.layout.dialog_fragment_date_time_picker, container, false);
 
         DatePicker datePicker = (DatePicker)view.findViewById(R.id.datePicker);
         datePicker.init(newDate.get(Calendar.YEAR), newDate.get(Calendar.MONTH), newDate.get(Calendar.DATE), this);
@@ -169,13 +124,14 @@ public class DateTimePickerDialog extends DialogFragment
         TimePicker timePicker = (TimePicker)view.findViewById(R.id.timePicker);
         timePicker.setCurrentHour(newDate.get(Calendar.HOUR_OF_DAY));
         timePicker.setCurrentMinute(newDate.get(Calendar.MINUTE));
+        timePicker.setIs24HourView(Util.is24HourFormat());
         timePicker.setOnTimeChangedListener(this);
 
         ListView timeZonesListView = (ListView)view.findViewById(R.id.time_zone_picker);
         TimeZoneAdapter timeZoneAdapter = new TimeZoneAdapter(getContext());
         timeZonesListView.setAdapter(timeZoneAdapter);
         int offset = newDate.getTimeZone().getRawOffset();
-        TimeZoneRow timeZoneRow = null;
+        Util.TimeZoneRow timeZoneRow = null;
         for (int i = 0; i < timeZoneAdapter.getCount(); ++i) {
             timeZoneRow = timeZoneAdapter.getItem(i);
             if (timeZoneRow.intOffset == offset) {
@@ -185,25 +141,24 @@ public class DateTimePickerDialog extends DialogFragment
         }
         timeZonesListView.setOnItemSelectedListener(this);
 
-        mDateTitle = new  TextView(getContext());
-        mTimeTitle = new  TextView(getContext());
-        mTimeZoneTitle = new  TextView(getContext());
-        mDateTitle.setText(Util.formatDate(newDate));
-        mTimeTitle.setText(Util.formatTime(newDate));
-        mTimeZoneTitle.setText(timeZoneRow.offset);
-
         TabHost tabHost = (TabHost)view.findViewById(R.id.tabhost);
         tabHost.setup();
         tabHost.addTab(tabHost.newTabSpec("DatePicker")
             .setContent(R.id.datePicker)
-            .setIndicator("1"/*mDateTitle*/));
+            .setIndicator("DateTitle"));
         tabHost.addTab(tabHost.newTabSpec("TimePicker")
                 .setContent(R.id.timePicker)
-                .setIndicator("2"/*mTimeTitle*/));
+                .setIndicator("TimeTitle"));
         tabHost.addTab(tabHost.newTabSpec("TimeZoneList")
                 .setContent(R.id.time_zone_picker)
-                .setIndicator("3"/*mTimeZoneTitle*/));
+                .setIndicator("TimeZoneTitle"));
         TabWidget tabWidget = tabHost.getTabWidget();
+        mDateTitle = (TextView)tabWidget.getChildTabViewAt(0).findViewById(android.R.id.title);
+        mTimeTitle = (TextView)tabWidget.getChildTabViewAt(1).findViewById(android.R.id.title);
+        mTimeZoneTitle = (TextView)tabWidget.getChildTabViewAt(2).findViewById(android.R.id.title);
+        mDateTitle.setText(Util.formatDate(newDate));
+        mTimeTitle.setText(Util.formatTime(newDate));
+        mTimeZoneTitle.setText(timeZoneRow.offset);
 
         view.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -265,7 +220,7 @@ public class DateTimePickerDialog extends DialogFragment
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        TimeZoneRow item = (TimeZoneRow)parent.getItemAtPosition(position);
+        Util.TimeZoneRow item = (Util.TimeZoneRow)parent.getItemAtPosition(position);
         TimeZone newTimeZone = TimeZone.getTimeZone(item.id);
         newDate.setTimeZone(newTimeZone);
         mTimeZoneTitle.setText(item.offset);

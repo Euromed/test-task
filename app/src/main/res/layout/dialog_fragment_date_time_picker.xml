@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="false">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -44,26 +46,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-
                 <DatePicker
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:id="@+id/datePicker"
-                    android:datePickerMode="spinner" />
+                    android:spinnersShown="false" />
 
                 <TimePicker
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/timePicker" />
+                    android:layout_height="match_parent"
+                    android:id="@+id/timePicker"
+                    android:timePickerMode="spinner" />
 
                 <ListView
                     android:id="@+id/time_zone_picker"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:choiceMode="singleChoice">
-
-                </ListView>
+                    android:choiceMode="singleChoice"
+                    android:layout_margin="@dimen/default_gap"
+                    android:drawSelectorOnTop="false"
+                    android:divider="@color/cardview_shadow_start_color"
+                    android:dividerHeight="1dp" />
             </FrameLayout>
         </LinearLayout>
     </TabHost>
