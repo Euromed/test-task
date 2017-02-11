@@ -21,12 +21,11 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.ibm.icu.util.Calendar;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-            PointsListFragment.OnFragmentInteractionListener,
-DateTimePickerDialog.ResultListener{
+            PointsListFragment.OnFragmentInteractionListener {
 
     private final int PointsListFragmentIdx = 0;
     private final int MapFragmentIdx = 1;
@@ -50,17 +49,6 @@ DateTimePickerDialog.ResultListener{
 //    };
 
     @Override
-    public void onDateTimeSubmit(Calendar date) {
-        SpannableString msg = new SpannableString("null");
-        if (date != null) {
-            msg = Util.formatDateTimeTimeZone(date);
-        }
-        Snackbar.make(findViewById(R.id.fab), msg, Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
-
-    }
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -82,7 +70,7 @@ DateTimePickerDialog.ResultListener{
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 Calendar cal = Calendar.getInstance();
-                DateTimePickerDialog.showDialog(cal, getSupportFragmentManager(), false);
+                DateTimePickerDialog.showDialog(cal, getSupportFragmentManager(), getResources());
             }
         });
 

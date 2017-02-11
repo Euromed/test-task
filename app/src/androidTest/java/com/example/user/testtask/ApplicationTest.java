@@ -5,8 +5,7 @@ import android.test.ApplicationTestCase;
 import android.text.SpannableString;
 import android.util.Log;
 
-import com.ibm.icu.util.Calendar;
-import com.ibm.icu.util.GregorianCalendar;
+import java.util.*;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>

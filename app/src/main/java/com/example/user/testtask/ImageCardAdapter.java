@@ -17,8 +17,8 @@ import android.widget.ImageView;
 public class ImageCardAdapter extends RecyclerView.Adapter<ImageCardAdapter.ViewHolder> {
 
     public interface OnCardInteractionListener {
-        public void onImageClick(int image);
-        public void onStarButtonClick(int image);
+        public void onImageClick(int image, View v);
+        public void onStarButtonClick(int image, View v);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -59,7 +59,7 @@ public class ImageCardAdapter extends RecyclerView.Adapter<ImageCardAdapter.View
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
-                    mListener.onStarButtonClick(position);
+                    mListener.onStarButtonClick(position, v);
                 }
             }
         });
@@ -70,7 +70,7 @@ public class ImageCardAdapter extends RecyclerView.Adapter<ImageCardAdapter.View
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
-                    mListener.onImageClick(position);
+                    mListener.onImageClick(position, v);
                 }
             }
         });

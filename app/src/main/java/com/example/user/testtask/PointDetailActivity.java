@@ -174,13 +174,13 @@ public class PointDetailActivity extends AppCompatActivity
     }
 
     @Override
-    public void onImageClick(int image) {
+    public void onImageClick(int image, View v) {
         String url = mPoint.getImageUrl(image);
-        Util.startExternalImageViewer(url, this);
+        Util.startExternalImageViewer(url, this, v);
     }
 
     @Override
-    public void onStarButtonClick(int image) {
+    public void onStarButtonClick(int image, View v) {
         mPoint.toggleDefaultImage(image);
     }
 }

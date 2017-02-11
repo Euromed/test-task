@@ -630,7 +630,7 @@ public class Point {
                 SQLiteDatabase db = getDatabase();
                 Cursor cursor = db.query(PointsDatabaseHelper.tblPoints,
                         new String[] {PointsDatabaseHelper.fldName},
-                        "id <> ?",
+                        "point_id <> ?",
                         new String[] {Integer.toString(pointId)},
                         null, null, null);
                 if (cursor.getCount() == 0) {
@@ -664,7 +664,7 @@ public class Point {
                 SQLiteDatabase db = getDatabase();
                 Cursor cursor = db.query(PointsDatabaseHelper.tblPoints,
                         new String[] {PointsDatabaseHelper.fldPointId},
-                        "id <> ? and abs(latitude - ?) < 1e-5 and abs(longitude - ?) < 1e-5",
+                        "point_id <> ? and abs(latitude - ?) < 1e-5 and abs(longitude - ?) < 1e-5",
                         new String[] {Integer.toString(pointId), Double.toString(latitude), Double.toString(longitude)},
                         null, null, "1");
                 return cursor.getCount() != 0;

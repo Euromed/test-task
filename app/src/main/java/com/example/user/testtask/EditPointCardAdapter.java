@@ -5,6 +5,7 @@ package com.example.user.testtask;
  */
 
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -15,8 +16,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import java.text.*;
-import java.util.Calendar;
-import java.util.concurrent.Exchanger;
+import java.util.*;
 
 import us.fatehi.pointlocation6709.Angle;
 import us.fatehi.pointlocation6709.Latitude;
@@ -29,8 +29,8 @@ import static java.lang.Double.*;
 
 public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdapter.ViewHolder> {
     public interface OnCardInteractionListener {
-        public void onImageClick(int image);
-        public void onStarButtonClick(int image);
+        public void onImageClick(int image, View v);
+        public void onStarButtonClick(int image, View v);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -43,15 +43,17 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
 
     private Point mPoint;
     private final OnCardInteractionListener mListener;
+    private final FragmentManager mFragmenManager;
     TextInputLayout mNameLayout = null;
     ImageView mMapImage = null;
     TextInputLayout mLatitudeLayout = null;
     TextInputLayout mLongitudeLayout = null;
     TextInputLayout mLastVisitedLayout = null;
 
-    public EditPointCardAdapter(Point pointSource, OnCardInteractionListener listener) {
+    public EditPointCardAdapter(Point pointSource, OnCardInteractionListener listener, FragmentManager fragmentManager) {
         mPoint = pointSource;
         mListener = listener;
+        mFragmenManager = fragmentManager;
     }
 
     @Override
@@ -137,7 +139,7 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
             }
 
             final SimpleDateFormat sf = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT); // new SimpleDateFormat(holder.cardView.getResources().getString(R.string.sql_time_format));
-            String lastVisited = sf.format(mPoint.getLastVisited());
+            String lastVisited = sf.format(mPoint.getLastVisited().getTime());
             mLastVisitedLayout = (TextInputLayout)v.findViewById(R.id.datetime_edit);
             editText = mLastVisitedLayout.getEditText();
             if (lastVisited != null) {
@@ -151,13 +153,31 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
                     if (!hasFocus) {
                         try {
                             lastVisited.setTime(sf.parse(editText.getText().toString()));
-                            editText.setText(sf.format(lastVisited));
+                            editText.setText(sf.format(lastVisited.getTime()));
                         }
                         catch (ParseException e) {
                             lastVisited.setTimeInMillis(0);
                         }
                         mPoint.setLastVisited(lastVisited);
                     }
+                }
+            });
+
+            View button = v.findViewById(R.id.datetime_picker_button);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Calendar cal = (Calendar)mPoint.getLastVisited().clone();
+                    DateTimePickerDialog.showDialog(cal, mFragmenManager, v.getResources());
+                }
+            });
+
+            button = v.findViewById(R.id.select_location_button);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Calendar cal = (Calendar)mPoint.getLastVisited().clone();
+                    DateTimePickerDialog.showDialog(cal, mFragmenManager, v.getResources());
                 }
             });
         }
@@ -168,7 +188,7 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
                 @Override
                 public void onClick(View v) {
                     if (mListener != null) {
-                        mListener.onImageClick(position);
+                        mListener.onImageClick(position, v);
                     }
                 }
             });
@@ -180,7 +200,7 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
                 @Override
                 public void onClick(View v) {
                     if (mListener != null) {
-                        mListener.onStarButtonClick(position);
+                        mListener.onStarButtonClick(position, v);
                     }
                 }
             });
@@ -241,5 +261,15 @@ public class EditPointCardAdapter extends RecyclerView.Adapter<EditPointCardAdap
     @Override
     public int getItemViewType(int position) {
         return (position == 0 ? 0 : 1);
+    }
+
+    public void setLastVisited(Calendar newDate) {
+        mPoint.setLastVisited(newDate);
+        final SimpleDateFormat sf = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT); // new SimpleDateFormat(holder.cardView.getResources().getString(R.string.sql_time_format));
+        String lastVisited = sf.format(mPoint.getLastVisited().getTime());
+        EditText editText = mLastVisitedLayout.getEditText();
+        if (lastVisited != null) {
+            editText.setText(lastVisited);
+        }
     }
 }

@@ -15,9 +15,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import java.util.*;
+
 public class PointEditActivity extends AppCompatActivity
         implements EditPointCardAdapter.OnCardInteractionListener,
-        Point.EventsListener
+        Point.EventsListener,
+        DateTimePickerDialog.ResultListener
 {
 
     public static final String EXTRA_POINT = "point";
@@ -115,7 +118,7 @@ public class PointEditActivity extends AppCompatActivity
         mRecyclerView = (RecyclerView)findViewById(R.id.edit_view);
         PointsDatabaseHelper dbh = new PointsDatabaseHelper(this);
         mPoint = new Point(dbh, this, getResources(), pointId);
-        mAdapter = new EditPointCardAdapter(mPoint, this);
+        mAdapter = new EditPointCardAdapter(mPoint, this, getSupportFragmentManager());
         mRecyclerView.setAdapter(mAdapter);
         mPoint.refresh(savedInstanceState);
     }
@@ -145,13 +148,13 @@ public class PointEditActivity extends AppCompatActivity
     }
 
     @Override
-    public void onImageClick(int image) {
+    public void onImageClick(int image, View v) {
         String url = mPoint.getImageUrl(image - 1);
-        Util.startExternalImageViewer(url, this);
+        Util.startExternalImageViewer(url, this, v);
     }
 
     @Override
-    public void onStarButtonClick(int image) {
+    public void onStarButtonClick(int image, View v) {
         mPoint.toggleDefaultImage(image - 1);
     }
 
@@ -163,5 +166,12 @@ public class PointEditActivity extends AppCompatActivity
     public void notifyChangesSaved() {
         setResult(RESULT_OK);
         finish();
+    }
+
+    @Override
+    public void onDateTimeSubmit(Calendar newDate) {
+        if (newDate != null) {
+            mAdapter.setLastVisited(newDate);
+        }
     }
 }

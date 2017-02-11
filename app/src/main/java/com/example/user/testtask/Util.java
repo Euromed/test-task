@@ -1,34 +1,62 @@
 package com.example.user.testtask;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.SubscriptSpan;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 
-import com.ibm.icu.util.*;
-import com.ibm.icu.text.*;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.IOException;
+import java.text.DateFormat;
 import java.text.ParsePosition;
-import java.util.Arrays;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by const on 04.11.2016.
  */
 
 public class Util {
-    public static void startExternalImageViewer(String url, Activity activity) {
+    private static final String TAG = "Util";
+
+    public static void startExternalImageViewer(String url, Activity activity, @NonNull View view) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.parse(url), "image/*");
-        activity.startActivity(intent);
+        try {
+            activity.startActivity(intent);
+            return;
+        }
+        catch (ActivityNotFoundException e) { }
+
+        intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        try {
+            activity.startActivity(intent);
+            return;
+        }
+        catch (ActivityNotFoundException e) { }
+
+        Snackbar.make(view, R.string.error_activity_not_found, Snackbar.LENGTH_LONG)
+                .show();
     }
 
-    public static final String patternTimeZone = "XXXXX";
+    public static final String patternTimeZone = "XXX";
 
     public static SpannableString formatDateTimeTimeZone(Calendar v) {
-        SimpleDateFormat dateFormat = getDateTimeInstance();
+        SimpleDateFormat dateFormat = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
         String formattedDateTime = dateFormat.format(v);
         dateFormat.applyPattern(patternTimeZone);
         String formattedTimeZone = dateFormat.format(v);
@@ -42,29 +70,39 @@ public class Util {
 
     public static String formatDate(Calendar v) {
         SimpleDateFormat dateFormat = (SimpleDateFormat)SimpleDateFormat.getDateInstance(DateFormat.SHORT);
-        return dateFormat.format(v);
+        dateFormat.setTimeZone(v.getTimeZone());
+        return dateFormat.format(v.getTime());
     }
 
     public static String formatTime(Calendar v) {
         SimpleDateFormat dateFormat = (SimpleDateFormat)SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
-        return dateFormat.format(v);
+        dateFormat.setTimeZone(v.getTimeZone());
+        return dateFormat.format(v.getTime());
     }
 
     public static Calendar parseDateTime(String src) {
-        Calendar rv = new GregorianCalendar();
-        SimpleDateFormat dateFormat = getDateTimeInstance();
+        com.ibm.icu.util.Calendar val = new com.ibm.icu.util.GregorianCalendar();
+        com.ibm.icu.text.SimpleDateFormat dateFormat = getDateTimeInstance();
         dateFormat.applyPattern(dateFormat.toPattern() + patternTimeZone);
         ParsePosition pos = new ParsePosition(0);
-        dateFormat.parse(src, rv, pos);
+        dateFormat.parse(src, val, pos);
         if (pos.getIndex() == 0) {
             dateFormat = getDateTimeInstance();
-            dateFormat.parse(src, rv, pos);
+            dateFormat.parse(src, val, pos);
         }
-        return pos.getIndex() == 0 ? null : rv;
+        if (pos.getIndex() == 0) {
+            return (null);
+        }
+        Calendar rv = new GregorianCalendar();
+        rv.setTimeInMillis(val.getTimeInMillis());
+        TimeZone tz = TimeZone.getTimeZone(val.getTimeZone().getID());
+        rv.setTimeZone(tz);
+        return (rv);
     }
 
-    private static SimpleDateFormat getDateTimeInstance() {
-        return (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+    private static com.ibm.icu.text.SimpleDateFormat getDateTimeInstance() {
+        return (com.ibm.icu.text.SimpleDateFormat)com.ibm.icu.text.SimpleDateFormat.
+                getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     }
 
     public static boolean is24HourFormat() {
@@ -99,22 +137,22 @@ public class Util {
         }
     }
 
-    static TimeZoneRow[] getTimeZones() {
-        String[] timeZonesIds = TimeZone.getAvailableIDs();
+    static TimeZoneRow[] getTimeZones(Resources r) {
+        String[] timeZonesIds = getTimeZonesIds(r);
         TimeZoneRow[] timeZones = new TimeZoneRow[timeZonesIds.length];
         SimpleDateFormat formatter = (SimpleDateFormat)SimpleDateFormat.getInstance();
         formatter.applyPattern(Util.patternTimeZone);
-        Calendar cal = GregorianCalendar.getInstance();
+        Date date = new Date();
         int ii = 0;
         for (int i = 0; i < timeZonesIds.length; ++i) {
-            String id = TimeZone.getCanonicalID(timeZonesIds[i]);
+            String id = timeZonesIds[i]; // TimeZone.getCanonicalID(timeZonesIds[i]);
             TimeZone timeZone = TimeZone.getTimeZone(id);
             String name = timeZone.getDisplayName();
             if (name.startsWith("GMT")) {
                 continue;
             }
-            cal.setTimeZone(timeZone);
-            String offset = formatter.format(cal);
+            formatter.setTimeZone(timeZone);
+            String offset = formatter.format(date);
             timeZones[ii++] = new TimeZoneRow(id, name, offset, timeZone.getRawOffset());
         }
         Arrays.sort(timeZones, 0, ii);
@@ -136,6 +174,92 @@ public class Util {
             rv = Arrays.copyOf(timeZones, j);
         }
         return rv;
+    }
+
+    private static final Object sLastLockObj = new Object();
+    private static String[] sLastZones = null;
+
+    /**
+     * Returns the time zones for the country, which is the code
+     * attribute of the timezone element in time_zones_by_country.xml. Do not modify.
+     *
+     * @param r is app resource.
+     * @return TimeZone list, maybe empty but never null. Do not modify.
+     * @hide
+     */
+    public static String[] getTimeZonesIds(Resources r) {
+        synchronized (sLastLockObj) {
+            if (sLastZones != null) {
+                return sLastZones;
+            }
+        }
+
+        ArrayList<String> tzs = new ArrayList<String>();
+
+        XmlResourceParser parser = r.getXml(R.xml.time_zones_by_country);
+
+        try {
+            beginDocument(parser, "timezones");
+
+            while (true) {
+                nextElement(parser);
+
+                String element = parser.getName();
+                if (element == null || !(element.equals("timezone"))) {
+                    break;
+                }
+
+                String code = parser.getAttributeValue(null, "code");
+
+                if (parser.next() == XmlPullParser.TEXT) {
+                    String zoneIdString = parser.getText();
+                    TimeZone tz = TimeZone.getTimeZone(zoneIdString);
+                    if (tz.getID().startsWith("GMT") == false) {
+                        // tz.getID doesn't start not "GMT" so its valid
+                        tzs.add(zoneIdString);
+                    }
+                }
+            }
+        } catch (XmlPullParserException e) {
+            Log.e(TAG, "Got xml parser exception getTimeZones(): e=", e);
+        } catch (IOException e) {
+            Log.e(TAG, "Got IO exception getTimeZones(): e=", e);
+        } finally {
+            parser.close();
+        }
+
+        synchronized(sLastLockObj) {
+            // Cache the last result;
+            sLastZones = tzs.toArray(new String[0]);
+            return sLastZones;
+        }
+    }
+
+    public static final void beginDocument(XmlPullParser parser, String firstElementName) throws XmlPullParserException, IOException
+    {
+        int type;
+        while ((type=parser.next()) != parser.START_TAG
+                && type != parser.END_DOCUMENT) {
+            ;
+        }
+
+        if (type != parser.START_TAG) {
+            throw new XmlPullParserException("No start tag found");
+        }
+
+        if (!parser.getName().equals(firstElementName)) {
+            throw new XmlPullParserException("Unexpected start tag: found " + parser.getName() +
+                    ", expected " + firstElementName);
+        }
+    }
+
+    public static final void nextElement(XmlPullParser parser) throws XmlPullParserException, IOException
+    {
+        int type;
+        while ((type=parser.next()) != parser.START_TAG
+                && type != parser.END_DOCUMENT) {
+            ;
+        }
     }
 
 }

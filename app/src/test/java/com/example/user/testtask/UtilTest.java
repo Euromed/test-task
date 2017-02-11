@@ -3,7 +3,7 @@ package com.example.user.testtask;
 import android.text.SpannableString;
 import android.util.Log;
 
-import com.ibm.icu.util.GregorianCalendar;
+import java.util.GregorianCalendar;
 
 import org.junit.Test;
 
